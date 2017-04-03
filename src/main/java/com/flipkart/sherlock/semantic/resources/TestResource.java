@@ -7,6 +7,7 @@ import javax.ws.rs.core.MediaType;
  * Created by anurag.laddha on 02/04/17.
  */
 
+//TODO: delete. Only for sample
 @Path("test")
 public class TestResource {
 

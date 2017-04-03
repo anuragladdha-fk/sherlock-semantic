@@ -12,9 +12,13 @@
         <java.version>1.8</java.version>
         <jetty.version>9.3.7.v20160115</jetty.version>
         <jersey.version>2.22.2</jersey.version>
+        <guice.version>4.0</guice.version>
+        <jdbi.version>2.75</jdbi.version>
     </properties>
 
     <dependencies>
+
+        <!-- Jersey/Jetty dependencies -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
@@ -52,9 +56,48 @@
             <artifactId>jersey-container-jetty-http</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+
+        <!-- end of Jersey/Jetty dependencies -->
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- DI dependencies -->
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>${guice.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-multibindings</artifactId>
+            <version>${guice.version}</version>
+        </dependency>
+        <!--end of DI dependencies -->
+
+        <!-- mysql dependencies -->
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi</artifactId>
+            <version>${jdbi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.30</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.5</version>
+        </dependency>
+        <!-- end of mysql dependencies-->
+
     </dependencies>
-
-
     <build>
         <resources>
             <resource>
