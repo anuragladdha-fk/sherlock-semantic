@@ -1,8 +1,8 @@
 package com.flipkart.sherlock.semantic.init;
 
-import com.flipkart.sherlock.semantic.dao.SearchConfigsDao;
-import com.flipkart.sherlock.semantic.dao.entity.MysqlConfig;
-import com.flipkart.sherlock.semantic.dao.entity.MysqlConnectionPoolConfig;
+import com.flipkart.sherlock.semantic.dao.mysql.SearchConfigsDao;
+import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConfig;
+import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConnectionPoolConfig;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;

@@ -1,4 +1,4 @@
-package com.flipkart.sherlock.semantic.dao;
+package com.flipkart.sherlock.semantic.dao.mysql;
 
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;

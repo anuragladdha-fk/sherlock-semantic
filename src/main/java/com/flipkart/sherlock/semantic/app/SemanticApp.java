@@ -1,8 +1,8 @@
 package com.flipkart.sherlock.semantic.app;
 
 
-import com.flipkart.sherlock.semantic.dao.entity.MysqlConfig;
-import com.flipkart.sherlock.semantic.dao.entity.MysqlConnectionPoolConfig;
+import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConfig;
+import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConnectionPoolConfig;
 import com.flipkart.sherlock.semantic.init.MysqlDaoProvider;
 import com.flipkart.sherlock.semantic.resources.TestDaoResource;
 import com.flipkart.sherlock.semantic.resources.TestResource;
@@ -13,7 +13,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.webapp.WebAppContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 

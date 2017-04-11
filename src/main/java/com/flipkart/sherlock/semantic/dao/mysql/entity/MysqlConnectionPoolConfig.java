@@ -1,4 +1,4 @@
-package com.flipkart.sherlock.semantic.dao.entity;
+package com.flipkart.sherlock.semantic.dao.mysql.entity;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
