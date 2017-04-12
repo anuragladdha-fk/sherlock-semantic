@@ -1,5 +1,6 @@
 package com.flipkart.sherlock.semantic.init;
 
+import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.SearchConfigsDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConfig;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConnectionPoolConfig;
@@ -56,4 +57,10 @@ public class MysqlDaoProvider extends AbstractModule {
         return dbi.onDemand(SearchConfigsDao.class);
     }
 
+    @Inject
+    @Singleton
+    @Provides
+    AugmentationDao getAugmentationDao(DBI dbi){
+        return dbi.onDemand(AugmentationDao.class);
+    }
 }
