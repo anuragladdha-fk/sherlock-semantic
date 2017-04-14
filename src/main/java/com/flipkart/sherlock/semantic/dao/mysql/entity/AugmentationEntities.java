@@ -131,10 +131,10 @@ public class AugmentationEntities {
         private String correct;
 
         //TODO int is fine? is phit same as pclick? what is sHit?
-        private int unigramPHits;
-        private int unigramSHits;
-        private int bigramPHits;
-        private int bigramSHits;
+        private float unigramPHits;
+        private float unigramSHits;
+        private float bigramPHits;
+        private float bigramSHits;
     }
 
     /**
@@ -144,7 +144,7 @@ public class AugmentationEntities {
         @Override
         public BiCompound map(int index, ResultSet r, StatementContext ctx) throws SQLException {
             return new BiCompound(r.getString("unigram"), r.getString("bigram"), r.getString("correct"),
-                r.getInt("uni_p_clicks"), r.getInt("uni_s_hits"), r.getInt("bi_p_clicks"), r.getInt("bi_s_hits"));
+                r.getFloat("uni_p_clicks"), r.getFloat("uni_s_hits"), r.getFloat("bi_p_clicks"), r.getFloat("bi_s_hits"));
         }
     }
 
@@ -155,7 +155,7 @@ public class AugmentationEntities {
         @Override
         public BiCompound map(int index, ResultSet r, StatementContext ctx) throws SQLException {
             return new BiCompound(r.getString("unigram"), r.getString("bigram"), r.getString("correct"),
-                r.getInt("uni_p_hits"), r.getInt("uni_s_hits"), r.getInt("bi_p_hits"), r.getInt("bi_s_hits"));
+                r.getFloat("uni_p_hits"), r.getFloat("uni_s_hits"), r.getFloat("bi_p_hits"), r.getFloat("bi_s_hits"));
         }
     }
 }

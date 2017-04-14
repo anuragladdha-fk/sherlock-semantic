@@ -12,8 +12,8 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
  */
 
 //TODO data source can have interface
+
+@Slf4j
 public class LocalCachedAugmentDataSource {
 
     private LoadingCache<String, TermAlternativesWrapper> augmentCache;
@@ -118,7 +120,7 @@ public class LocalCachedAugmentDataSource {
         }
 
         @VisibleForTesting
-        TermAlternativesWrapper getSynonymAugmentations(AugmentationDao augmentationDao) {
+        TermAlternativesWrapper getSynonymAugmentations() {
             /**
              * Replace type synonym
              *      term --> rep1, rep2
@@ -135,8 +137,8 @@ public class LocalCachedAugmentDataSource {
              *          syn1 --> termA, syn1, syn2
              *          syn2 --> termA, syn1, syn2
              */
-            if (augmentationDao != null) {
-                List<Synonym> allSynonyms = augmentationDao.getSynonyms();
+            if (this.augmentationDao != null) {
+                List<Synonym> allSynonyms = this.augmentationDao.getSynonyms();
 
                 if (allSynonyms != null && allSynonyms.size() > 0) {
                     TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
@@ -164,17 +166,13 @@ public class LocalCachedAugmentDataSource {
                             }
 
                             if (currSynonym.getSynType().equals(Synonym.Type.replace)) {//query to query alternative
-                                Set<AugmentAlternative> augmentAlternatives = createAugmentationEntries(currSynonym.getTerm(),
-                                    augmentations, AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym, 0);
-                                //add to query to query map
-                                termAlternativesWrapper.addQueryAlternatives(currSynonym.getTerm(), augmentAlternatives);
-                            }
-                            else {//term to term alternatives
+                                addQueryAlternatives(termAlternativesWrapper, currSynonym.getTerm(), augmentations,
+                                    AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym, 0);
+                            }else {//term to term alternatives
                                 for (String singleSynonym : currItemSynonyms) {
                                     //All alternatives are added to each of the synonym
-                                    Set<AugmentAlternative> currAlternatives = createAugmentationEntries(singleSynonym,
-                                        augmentations, AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym, 0);
-                                    termAlternativesWrapper.addTermAlternatives(singleSynonym, currAlternatives);
+                                    addTermAlternatives(termAlternativesWrapper, singleSynonym, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                                        AugmentAlternative.Type.Synonym, 0);
                                 }
                             }
                         }
@@ -185,9 +183,133 @@ public class LocalCachedAugmentDataSource {
             return null;
         }
 
+
         @VisibleForTesting
-        Set<AugmentAlternative> createAugmentationEntries(String original, Set<String> augmentationSet, String context,
-                                                          AugmentAlternative.Type type, float confidence) {
+        TermAlternativesWrapper loadCompoundWords(boolean useNewCompounds) {
+
+            List<BiCompound> biCompoundList = null;
+            if (useNewCompounds) {
+                EntityMeta compoundTableMeta = this.augmentationDao.getEntityMeta("bi_compound");
+                log.info("Fetching data from compound table {} having base name: {}", compoundTableMeta.getLatestEntityTable(),
+                    compoundTableMeta.getBaseTable());
+                biCompoundList = this.rawQueriesDao.getAugmentationCompounds(compoundTableMeta.getLatestEntityTable());
+            }
+            else{
+                biCompoundList = this.augmentationDao.getOldCompounds();
+            }
+
+            if (biCompoundList != null && biCompoundList.size() > 0) {
+                TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
+
+                for (BiCompound currBiCompound : biCompoundList) {
+
+                    String unigram = currBiCompound.getUnigram();
+                    String bigram = currBiCompound.getBigram();
+                    String correct = currBiCompound.getCorrect();
+
+                    float conf = getConfidenceForCompoundWordEntry(correct, currBiCompound.getUnigramPHits(),
+                        currBiCompound.getUnigramSHits(), currBiCompound.getBigramPHits(), currBiCompound.getBigramSHits());
+
+                    Set<String> augmentations = new HashSet<String>(Arrays.asList(unigram, "(" + bigram + ")"));
+                    if ("both".equalsIgnoreCase(correct)) {
+                        if (isValid(unigram, bigram)) {
+                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                                AugmentAlternative.Type.CompundWord, conf);
+                        }
+                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                            AugmentAlternative.Type.CompundWord, conf);
+                    }
+                    else if ("unigram".equals(correct)) {
+                        if (isValid(unigram, bigram)) {
+                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                                AugmentAlternative.Type.CompundWord, conf);
+                        }
+                    }
+                    else if ("bigram".equals(correct)) {
+                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                            AugmentAlternative.Type.CompundWord, conf);
+                    }
+                }
+                return termAlternativesWrapper;
+            }
+            return null;
+        }
+
+
+        private void addTermAlternatives(TermAlternativesWrapper termAlternativesWrapper, String original, Set<String> augmentationSet,
+                                         String context, AugmentAlternative.Type type, float confidence){
+            Set<AugmentAlternative> augmentAlternatives = createAugmentationEntries(original,
+                augmentationSet, context, type, confidence);
+            //add to term to term map
+            termAlternativesWrapper.addTermAlternatives(original, augmentAlternatives);
+        }
+
+        private void addQueryAlternatives(TermAlternativesWrapper termAlternativesWrapper, String original, Set<String> augmentationSet,
+                                          String context, AugmentAlternative.Type type, float confidence){
+            Set<AugmentAlternative> augmentAlternatives = createAugmentationEntries(original,
+                augmentationSet, context, type, confidence);
+            //add to query to query map
+            termAlternativesWrapper.addQueryAlternatives(original, augmentAlternatives);
+        }
+
+        private boolean isValid(String unigram, String bigram) {
+
+//            if (!StringUtils.isBlank(unigram) && !StringUtils.isBlank(bigram)){
+//                Set<String> bigramTokens = Lists.newArrayList(StringUtils.split(bigram, ",")).stream().map(String::trim).collect(Collectors.toSet());
+//                return !(stopWordsSet.containsAll(bigramTokens));
+//            }
+//            return false;
+
+            Set<String> bigramTokens = new HashSet<String>(Arrays.asList(StringUtils.split(bigram, " ,")));
+            if (stopWordsSet.containsAll(bigramTokens)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+
+        //Copied as-is from previous version of semantic
+        private float getConfidenceForCompoundWordEntry(String correct, float uni_phits, float uni_shits, float bi_phits,
+                                                        float bi_shits) {
+
+            float conf = 0;
+
+            float correct_phits = 0.0f;
+            float correct_shits = 0.0f;
+            float incorrect_phits = 0.0f;
+            float incorrect_shits = 0.0f;
+
+            if (correct.equalsIgnoreCase("unigram")) {
+                correct_phits = uni_phits;
+                correct_shits = uni_shits;
+                incorrect_phits = bi_phits;
+                incorrect_shits = bi_shits;
+            }
+            else if (correct.equalsIgnoreCase("bigram")) {
+                correct_phits = bi_phits;
+                correct_shits = bi_shits;
+                incorrect_phits = uni_phits;
+                incorrect_shits = uni_shits;
+            }
+            else { //if its unspecified or both are correct.
+                return 0;
+            }
+
+            // the incorrect guys occurs with some frequency, the correct guy has decent phits.
+            // and the correct is order of magnitude better than incorrect.
+            if (incorrect_shits > 5 && correct_phits > 50 &&
+                correct_shits > 5*incorrect_shits &&
+                correct_phits > 5*incorrect_phits) {
+                conf = correct_phits/ (incorrect_phits < 1 ? 1: incorrect_phits);
+            }
+
+            return conf;
+        }
+
+
+        private Set<AugmentAlternative> createAugmentationEntries(String original, Set<String> augmentationSet, String context,
+                                                                  AugmentAlternative.Type type, float confidence) {
             if (!StringUtils.isBlank(original) && augmentationSet != null && augmentationSet.size() > 0
                 && context != null && type != null){
                 Set<AugmentAlternative> augmentAlternatives = new HashSet<>();

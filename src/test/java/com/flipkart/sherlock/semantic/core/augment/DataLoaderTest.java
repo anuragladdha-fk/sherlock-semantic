@@ -48,7 +48,7 @@ public class DataLoaderTest {
 
         when(augmentationDaoMock.getSynonyms()).thenReturn(replaceSynonyms);
         DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock);
-        TermAlternativesWrapper termAlternativesWrapper = dataLoader.getSynonymAugmentations(augmentationDaoMock);
+        TermAlternativesWrapper termAlternativesWrapper = dataLoader.getSynonymAugmentations();
 
         System.out.println("Query alternatives: " + termAlternativesWrapper.getQueryToAlternativesMap());
         System.out.println("Term alternatives: " + termAlternativesWrapper.getTermToAlternativesMap());
@@ -97,7 +97,7 @@ public class DataLoaderTest {
 
         when(augmentationDaoMock.getSynonyms()).thenReturn(replaceSynonyms);
         DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock);
-        TermAlternativesWrapper termAlternativesWrapper = dataLoader.getSynonymAugmentations(augmentationDaoMock);
+        TermAlternativesWrapper termAlternativesWrapper = dataLoader.getSynonymAugmentations();
 
         System.out.println("Query alternatives: " + termAlternativesWrapper.getQueryToAlternativesMap());
         System.out.println("Term alternatives: " + termAlternativesWrapper.getTermToAlternativesMap());
@@ -123,5 +123,57 @@ public class DataLoaderTest {
 
         Assert.assertTrue(expectedAugmentations.equals(termAlternativesWrapper.getTermAlternatives("source1")));
     }
+
+
+    @Test
+    public void testLoadCompoundWords(){
+        compoundWordsTestHelper(true); //test for new compound words
+        compoundWordsTestHelper(true); //test for old compound words
+    }
+
+    private void compoundWordsTestHelper(boolean testNewCompoundWords){
+        List<BiCompound> biCompoundList = new ArrayList<>();
+        //case1 : since unigram is correct, cache will be keyed on bigram
+        biCompoundList.add(new BiCompound("firstunigram", "first bigram", "unigram", 10, 10, 10, 10));
+        //case2 : since bigram is correct, cache will be keyed on unigram
+        biCompoundList.add(new BiCompound("secondunigram", "second bigram", "bigram", 10, 10, 10, 10));
+        //case3 : since both are correct, cache will be keyed on both unigram and bigram
+        biCompoundList.add(new BiCompound("thirdunigram", "third bigram", "both", 10, 10, 10, 10));
+        EntityMeta dummyEntityMeta = new EntityMeta("b", "latestB");
+
+        if(testNewCompoundWords) {
+            when(augmentationDaoMock.getEntityMeta(anyString())).thenReturn(dummyEntityMeta);
+            when(rawQueriesDaoMock.getAugmentationCompounds(dummyEntityMeta.getLatestEntityTable())).thenReturn(biCompoundList);
+        }
+        else{
+            when(augmentationDaoMock.getOldCompounds()).thenReturn(biCompoundList);
+        }
+
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock);
+        TermAlternativesWrapper termAlternativesWrapper = dataLoader.loadCompoundWords(testNewCompoundWords);
+
+        System.out.println(termAlternativesWrapper.getQueryToAlternativesMap());
+        System.out.println(termAlternativesWrapper.getTermToAlternativesMap());
+
+        //Verify no query to query alternatives were formed
+        Assert.assertEquals(0, termAlternativesWrapper.getQueryToAlternativesMap().size());
+
+        //Case 1, verify bigram has two suggestions
+        Assert.assertEquals(2, termAlternativesWrapper.getTermAlternatives("first bigram").size());
+        //Case 2, verify unigram has two suggestions
+        Assert.assertEquals(2, termAlternativesWrapper.getTermAlternatives("secondunigram").size());
+
+        //Case 3, verify both unigram and bigram have two suggestions
+        Assert.assertEquals(2, termAlternativesWrapper.getTermAlternatives("thirdunigram").size());
+        Assert.assertEquals(2, termAlternativesWrapper.getTermAlternatives("third bigram").size());
+
+        //Verify alternatives created for one of the cases: case 1
+        Set<AugmentAlternative> expectedAlternatives = Sets.newHashSet(
+            new AugmentAlternative("first bigram", "(first bigram)", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord),
+            new AugmentAlternative("first bigram", "firstunigram", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord)
+        );
+        Assert.assertTrue(expectedAlternatives.equals(termAlternativesWrapper.getTermAlternatives("first bigram")));
+    }
+
 
 }

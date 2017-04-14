@@ -15,6 +15,8 @@
         <guice.version>4.0</guice.version>
         <jdbi.version>2.75</jdbi.version>
         <junit.version>4.7</junit.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <logback.version>1.0.13</logback.version>
     </properties>
 
     <dependencies>
@@ -106,6 +108,26 @@
             <version>0.9.5</version>
         </dependency>
         <!-- end of mysql dependencies-->
+
+        <!-- logging dependencies -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <!--end of logging dependencies -->
 
         <!-- testing -->
         <dependency>

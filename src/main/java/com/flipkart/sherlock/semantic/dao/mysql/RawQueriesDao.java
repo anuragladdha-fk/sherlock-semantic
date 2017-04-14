@@ -22,7 +22,7 @@ public class RawQueriesDao {
         this.dbi = dbi;
     }
 
-    List<SpellCorrection> getAugmentationSpellCorrections(String spellCorrectionTableName){
+    public List<SpellCorrection> getAugmentationSpellCorrections(String spellCorrectionTableName){
         //Base table name: spellcheck_new
         String query = String.format(" SELECT incorrect, correct FROM  %s " +
             " WHERE incorrect IS NOT NULL AND correct IS NOT NULL AND row_status = 'high_confidence' ", spellCorrectionTableName);
@@ -35,7 +35,7 @@ public class RawQueriesDao {
         });
     }
 
-    List<BiCompound> getAugmentationCompounds(String tableName){
+    public List<BiCompound> getAugmentationCompounds(String tableName){
         //Base table name: bi_compound
         String query = String.format(" SELECT unigram, bigram, correct, uni_p_hits, uni_s_hits, bi_p_hits, bi_s_hits " +
             " FROM %s WHERE correct !='none' ", tableName);
