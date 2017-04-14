@@ -18,6 +18,11 @@ public class AugmentationEntities {
     @AllArgsConstructor
     @ToString
     public static class Synonym {
+
+        public static enum Type {
+            replace, query, term
+        }
+
         private String term;
         /**
          * Comma separated synonym for term
@@ -26,13 +31,13 @@ public class AugmentationEntities {
         /**
          * type of synonym
          */
-        private String synType;
+        private Type synType;
     }
 
     public static class SynonymMapper implements ResultSetMapper<Synonym> {
         @Override
         public Synonym map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-            return new Synonym(r.getString("query"), r.getString("synonyms"), r.getString("stype"));
+            return new Synonym(r.getString("query"), r.getString("synonyms"), Synonym.Type.valueOf(r.getString("stype").toLowerCase()));
         }
     }
 

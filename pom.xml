@@ -14,6 +14,7 @@
         <jersey.version>2.22.2</jersey.version>
         <guice.version>4.0</guice.version>
         <jdbi.version>2.75</jdbi.version>
+        <junit.version>4.7</junit.version>
     </properties>
 
     <dependencies>
@@ -59,12 +60,21 @@
 
         <!-- end of Jersey/Jetty dependencies -->
 
+        <!--  utils dependencies -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.16.2</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+        </dependency>
+
+        <!--  end of utils dependencies -->
 
         <!-- DI dependencies -->
         <dependency>
@@ -96,6 +106,21 @@
             <version>0.9.5</version>
         </dependency>
         <!-- end of mysql dependencies-->
+
+        <!-- testing -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- end of testing -->
 
     </dependencies>
     <build>
