@@ -23,16 +23,16 @@ public class AugmentAlternative {
      * Type of augmentation
      */
     public static enum Type{
-        CompundWord, Synonym, SpellVariation
+        CompundWord, Synonym, SpellVariation, term, replace, query, replaceNoShow
     }
 
     private String original;
     private String augmentation;
     private String context;
-    private Type type;
+    private String type;
     private float confidence;
 
-    public AugmentAlternative(String original, String augmentation, String context, Type type) {
+    public AugmentAlternative(String original, String augmentation, String context, String type) {
         this(original, augmentation, context, type, 0f);
     }
 

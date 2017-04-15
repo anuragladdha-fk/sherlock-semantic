@@ -1,9 +1,12 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
 import com.flipkart.sherlock.semantic.core.augment.LocalCachedAugmentDataSource.*;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -34,6 +37,9 @@ public class DataLoaderTest {
     @Mock
     ExecutorService executorServiceMock;
 
+    ObjectMapper objectMapper = new ObjectMapper();
+
+
     @Test
     public void testSynonyms_ReplaceBehavior(){
 
@@ -47,7 +53,7 @@ public class DataLoaderTest {
         replaceSynonyms.add(new Synonym("source2", "rep3", Synonym.Type.replace));
 
         when(augmentationDaoMock.getSynonyms()).thenReturn(replaceSynonyms);
-        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock);
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
         TermAlternativesWrapper termAlternativesWrapper = dataLoader.getSynonymAugmentations();
 
         System.out.println("Query alternatives: " + termAlternativesWrapper.getQueryToAlternativesMap());
@@ -67,8 +73,8 @@ public class DataLoaderTest {
          * Compare values in cache for one of the keys
          */
         Set<AugmentAlternative> expectedAugmentations = Sets.newHashSet(
-            new AugmentAlternative("SOURCE1", "replacement1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym),
-            new AugmentAlternative("SOURCE1", "REPLACEMENT2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym));
+            new AugmentAlternative("SOURCE1", "replacement1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
+            new AugmentAlternative("SOURCE1", "REPLACEMENT2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()));
 
         Set<AugmentAlternative> actualAugmentations = termAlternativesWrapper.getQueryAlternatives("source1");
 
@@ -96,7 +102,7 @@ public class DataLoaderTest {
         replaceSynonyms.add(new Synonym("source2", "rep3", Synonym.Type.query));
 
         when(augmentationDaoMock.getSynonyms()).thenReturn(replaceSynonyms);
-        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock);
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
         TermAlternativesWrapper termAlternativesWrapper = dataLoader.getSynonymAugmentations();
 
         System.out.println("Query alternatives: " + termAlternativesWrapper.getQueryToAlternativesMap());
@@ -116,9 +122,9 @@ public class DataLoaderTest {
 
 
         Set<AugmentAlternative> expectedAugmentations = Sets.newHashSet(
-            new AugmentAlternative("SOURCE1", "SOURCE1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym),
-            new AugmentAlternative("SOURCE1", "replacement1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym),
-            new AugmentAlternative("SOURCE1", "REPLACEMENT2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym)
+            new AugmentAlternative("SOURCE1", "SOURCE1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
+            new AugmentAlternative("SOURCE1", "replacement1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
+            new AugmentAlternative("SOURCE1", "REPLACEMENT2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name())
         );
 
         Assert.assertTrue(expectedAugmentations.equals(termAlternativesWrapper.getTermAlternatives("source1")));
@@ -128,7 +134,7 @@ public class DataLoaderTest {
     @Test
     public void testLoadCompoundWords(){
         compoundWordsTestHelper(true); //test for new compound words
-        compoundWordsTestHelper(true); //test for old compound words
+        compoundWordsTestHelper(false); //test for old compound words
     }
 
     private void compoundWordsTestHelper(boolean testNewCompoundWords){
@@ -149,7 +155,7 @@ public class DataLoaderTest {
             when(augmentationDaoMock.getOldCompounds()).thenReturn(biCompoundList);
         }
 
-        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock);
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
         TermAlternativesWrapper termAlternativesWrapper = dataLoader.loadCompoundWords(testNewCompoundWords);
 
         System.out.println(termAlternativesWrapper.getQueryToAlternativesMap());
@@ -169,11 +175,106 @@ public class DataLoaderTest {
 
         //Verify alternatives created for one of the cases: case 1
         Set<AugmentAlternative> expectedAlternatives = Sets.newHashSet(
-            new AugmentAlternative("first bigram", "(first bigram)", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord),
-            new AugmentAlternative("first bigram", "firstunigram", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord)
+            new AugmentAlternative("first bigram", "(first bigram)", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord.name()),
+            new AugmentAlternative("first bigram", "firstunigram", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord.name())
         );
         Assert.assertTrue(expectedAlternatives.equals(termAlternativesWrapper.getTermAlternatives("first bigram")));
     }
 
 
+    @Test
+    public void testGetNegativeList(){
+
+        Set<String> expectedNegatives = Sets.newHashSet("n1", "n2");
+        when(augmentationDaoMock.getNegatives()).thenReturn(expectedNegatives);
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
+
+        Set<String> actualNegatives = dataLoader.loadNegatives();
+        System.out.println("Actual negatives: " + actualNegatives);
+        Assert.assertTrue(expectedNegatives.equals(actualNegatives));
+    }
+
+    @Test
+    public void testStringSet() throws Exception{
+        Set<String> stringSet = Sets.newHashSet("abc", "pqr");
+        System.out.println(objectMapper.writeValueAsString(stringSet));
+
+        Set<String> deserialised = objectMapper.readValue(objectMapper.writeValueAsString(stringSet), new TypeReference<Set<String>>() {
+        });
+        System.out.println(deserialised);
+
+    }
+
+
+    @Test
+    public void testSpellVariations(){
+
+        EntityMeta dummyEntityMeta = new EntityMeta("b", "latestB");
+
+        List<SpellCorrection> newSpellCorrections = Lists.newArrayList(new SpellCorrection("new1", "[\"newCorrect1\"]"),
+            new SpellCorrection("new2", "[\"pqr\",\"abc\"]"));
+        List<SpellCorrection> oldSpellCorrections = Lists.newArrayList(new SpellCorrection("old", "[\"oldCorrect\"]"));
+
+        when(augmentationDaoMock.getEntityMeta(anyString())).thenReturn(dummyEntityMeta);
+        when(rawQueriesDaoMock.getAugmentationSpellCorrections(dummyEntityMeta.getLatestEntityTable())).thenReturn(newSpellCorrections);
+        when(augmentationDaoMock.getSpellCorrectionsLowConf()).thenReturn(oldSpellCorrections);
+
+        //Invoke processing spell variations
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
+        TermAlternativesWrapper termAlternativesWrapper = dataLoader.loadSpellVariations();
+
+        System.out.println("Query alternatives: " + termAlternativesWrapper.getQueryToAlternativesMap());
+        System.out.println("Term alternatives: " + termAlternativesWrapper.getTermToAlternativesMap());
+
+        //Verify no query to query alternatives were formed
+        Assert.assertEquals(0, termAlternativesWrapper.getQueryToAlternativesMap().size());
+
+        //Validate correct spelling and incorrect spelling are added as alternative for incorrect spelling
+        Assert.assertEquals(2, termAlternativesWrapper.getTermToAlternativesMap().get("new1").size()); //new1 --> new1, newCorrect1
+        Assert.assertEquals(3, termAlternativesWrapper.getTermToAlternativesMap().get("new2").size()); //new2 --> new2, pqr, abc
+        Assert.assertEquals(2, termAlternativesWrapper.getTermToAlternativesMap().get("old").size());
+
+        //Validate returned value for one of the cases: new2 --> new2, pqr, abc
+
+        Set<AugmentAlternative> expectedAlternatives = Sets.newHashSet(
+            new AugmentAlternative("new2", "new2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0),
+            new AugmentAlternative("new2", "abc", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0),
+            new AugmentAlternative("new2", "pqr", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0)
+        );
+        Assert.assertTrue(expectedAlternatives.equals(termAlternativesWrapper.getTermToAlternativesMap().get("new2")));
+    }
+
+
+    @Test
+    public void testLoadAugmentationExperiments(){
+        List<AugmentationExperiment> augmentationExperiments = new ArrayList<>();
+        augmentationExperiments.add(new AugmentationExperiment("incorrect query", "correct replace", "10.0", "replace", "source1"));   //eg1
+        augmentationExperiments.add(new AugmentationExperiment("incorrect term", "correct term", "20.0", "term", "source2"));  //eg2
+
+        when(augmentationDaoMock.getAugmentationExperiements()).thenReturn(augmentationExperiments);
+
+        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
+        TermAlternativesWrapper termAlternativesWrapper = dataLoader.loadAugmentationExperiments();
+
+        System.out.println("Query alternatives: " + termAlternativesWrapper.getQueryToAlternativesMap());
+        System.out.println("Term alternatives: " + termAlternativesWrapper.getTermToAlternativesMap());
+
+        //replace type goes as query alternative  (eg1)
+        Assert.assertEquals(1, termAlternativesWrapper.getQueryToAlternativesMap().size());
+        //term type goes as term alternative (eg2)
+        Assert.assertEquals(1, termAlternativesWrapper.getTermToAlternativesMap().size());
+
+        /**
+         * Validate the query and term alternatives formed are as expected
+         */
+        Set<AugmentAlternative> expectedQueryAlternative = Sets.newHashSet(new AugmentAlternative("incorrect query",
+            "correct replace", "source1", "replace", 10.0f));
+
+        Set<AugmentAlternative> expectedTermAlternative = Sets.newHashSet(
+            new AugmentAlternative("incorrect term", "(correct term)", "source2", "term", 20.0f),
+            new AugmentAlternative("incorrect term", "(incorrect term)", "source2", "term", 20.0f));
+
+        Assert.assertTrue(expectedQueryAlternative.equals(termAlternativesWrapper.getQueryToAlternativesMap().get("incorrect query")));
+        Assert.assertTrue(expectedTermAlternative.equals(termAlternativesWrapper.getTermToAlternativesMap().get("incorrect term")));
+    }
 }

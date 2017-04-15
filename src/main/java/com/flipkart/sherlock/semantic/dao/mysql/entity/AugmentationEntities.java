@@ -46,12 +46,17 @@ public class AugmentationEntities {
     @AllArgsConstructor
     @ToString
     public static class AugmentationExperiment {
+
+        //todo there is '' as valid value for type in db.
+        public static enum Type {
+            replace, replaceNoShow, term, query
+        }
+
         private String incorrectQuery;
         private String correctQuery;
-        private String context;
+        private String context; //This carries confidence score
         private String type;
-        //Source is getting used as context and context is not populated
-        private String source;
+        private String source; //Source is getting used as context
     }
 
     public static class AugmentationExperimentMapper implements ResultSetMapper<AugmentationExperiment> {

@@ -1,5 +1,7 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
@@ -8,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -17,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Created by anurag.laddha on 12/04/17.
@@ -31,14 +35,16 @@ public class LocalCachedAugmentDataSource {
     private AugmentationDao augmentationDao;
     private RawQueriesDao rawQueriesDao;
     private ExecutorService executorService;
+    private ObjectMapper objectMapper;
 
     @Inject
     public LocalCachedAugmentDataSource(AugmentationDao augmentationDao, RawQueriesDao rawQueriesDao, ExecutorService executorService,
-                                        int cacheExpireSec) {
+                                        ObjectMapper objectMapper, int cacheExpireSec) {
         this.augmentationDao = augmentationDao;
         this.rawQueriesDao = rawQueriesDao;
         this.executorService = executorService;
-        DataLoader dataLoader = new DataLoader(augmentationDao, rawQueriesDao, executorService);
+        this.objectMapper = objectMapper;
+        DataLoader dataLoader = new DataLoader(augmentationDao, rawQueriesDao, executorService, objectMapper);
         this.augmentCache = CacheBuilder.newBuilder().maximumSize(10).refreshAfterWrite(cacheExpireSec, TimeUnit.SECONDS).build(dataLoader);
     }
 
@@ -92,15 +98,18 @@ public class LocalCachedAugmentDataSource {
         private AugmentationDao augmentationDao;
         private RawQueriesDao rawQueriesDao;
         private ExecutorService executorService;
+        private ObjectMapper objectMapper;
 
         //TODO this can come from config
         private static final Set<String> stopWordsSet = Sets.newHashSet("&", "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it", "no",
             "not", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these", "they", "this", "to", "was", "will", "with");
 
-        public DataLoader(AugmentationDao augmentationDao, RawQueriesDao rawQueriesDao, ExecutorService executorService) {
+        public DataLoader(AugmentationDao augmentationDao, RawQueriesDao rawQueriesDao, ExecutorService executorService,
+                          ObjectMapper objectMapper) {
             this.augmentationDao = augmentationDao;
             this.rawQueriesDao = rawQueriesDao;
             this.executorService = executorService;
+            this.objectMapper = objectMapper;
         }
 
         @Override
@@ -167,12 +176,12 @@ public class LocalCachedAugmentDataSource {
 
                             if (currSynonym.getSynType().equals(Synonym.Type.replace)) {//query to query alternative
                                 addQueryAlternatives(termAlternativesWrapper, currSynonym.getTerm(), augmentations,
-                                    AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym, 0);
+                                    AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name(), 0);
                             }else {//term to term alternatives
                                 for (String singleSynonym : currItemSynonyms) {
                                     //All alternatives are added to each of the synonym
                                     addTermAlternatives(termAlternativesWrapper, singleSynonym, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
-                                        AugmentAlternative.Type.Synonym, 0);
+                                        AugmentAlternative.Type.Synonym.name(), 0);
                                 }
                             }
                         }
@@ -186,6 +195,12 @@ public class LocalCachedAugmentDataSource {
 
         @VisibleForTesting
         TermAlternativesWrapper loadCompoundWords(boolean useNewCompounds) {
+
+            /**
+             * both unigram and bigram are considered as alternative
+             * Depending on which one is correct (unigram or bigram) the other one is considered as term to correct.
+             *      eg if unigram is correct, bigram is considered as term to be corrected and used as cache key
+             */
 
             List<BiCompound> biCompoundList = null;
             if (useNewCompounds) {
@@ -212,22 +227,22 @@ public class LocalCachedAugmentDataSource {
 
                     Set<String> augmentations = new HashSet<String>(Arrays.asList(unigram, "(" + bigram + ")"));
                     if ("both".equalsIgnoreCase(correct)) {
-                        if (isValid(unigram, bigram)) {
+                        if (areGramsValid(unigram, bigram)) {
                             addTermAlternatives(termAlternativesWrapper, bigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
-                                AugmentAlternative.Type.CompundWord, conf);
+                                AugmentAlternative.Type.CompundWord.name(), conf);
                         }
                         addTermAlternatives(termAlternativesWrapper, unigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
-                            AugmentAlternative.Type.CompundWord, conf);
+                            AugmentAlternative.Type.CompundWord.name(), conf);
                     }
                     else if ("unigram".equals(correct)) {
-                        if (isValid(unigram, bigram)) {
+                        if (areGramsValid(unigram, bigram)) {
                             addTermAlternatives(termAlternativesWrapper, bigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
-                                AugmentAlternative.Type.CompundWord, conf);
+                                AugmentAlternative.Type.CompundWord.name(), conf);
                         }
                     }
                     else if ("bigram".equals(correct)) {
                         addTermAlternatives(termAlternativesWrapper, unigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
-                            AugmentAlternative.Type.CompundWord, conf);
+                            AugmentAlternative.Type.CompundWord.name(), conf);
                     }
                 }
                 return termAlternativesWrapper;
@@ -235,39 +250,136 @@ public class LocalCachedAugmentDataSource {
             return null;
         }
 
+        @VisibleForTesting
+        Set<String> loadNegatives(){
+            try {
+                return this.augmentationDao.getNegatives();
+            }
+            catch(Exception e){
+                log.error("Exception while getting negative list", e);
+            }
+            return null;
+        }
+
+
+        @VisibleForTesting
+        TermAlternativesWrapper loadSpellVariations(){
+            try {
+                List<SpellCorrection> allSpellCorrections = new ArrayList<>();
+
+                //Load new spellings
+                EntityMeta spellingsTableMeta = this.augmentationDao.getEntityMeta("spellcheck_new");
+                log.info("Fetching data from spelling table {} having base name: {}", spellingsTableMeta.getLatestEntityTable(),
+                    spellingsTableMeta.getBaseTable());
+                List<SpellCorrection> newSpellCorrections = this.rawQueriesDao.getAugmentationSpellCorrections(spellingsTableMeta.getLatestEntityTable());
+
+                //Load old spellings
+                List<SpellCorrection> oldSpellCorrections = this.augmentationDao.getSpellCorrectionsLowConf();
+
+                if (newSpellCorrections != null && newSpellCorrections.size() > 0) {
+                    allSpellCorrections.addAll(newSpellCorrections);
+                }
+                if (oldSpellCorrections != null && oldSpellCorrections.size() > 0) {
+                    allSpellCorrections.addAll(oldSpellCorrections);
+                }
+
+                if (allSpellCorrections.size() > 0) {
+                    TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
+                    Set<String> augmentations;
+                    for (SpellCorrection correction : allSpellCorrections) {
+                        augmentations = this.objectMapper.readValue(correction.getCorrectSpelling(), new TypeReference<Set<String>>() {});
+                        augmentations.add(correction.getIncorrectSpelling());
+                        //add alternatives for incorrect spelling
+                        addTermAlternatives(termAlternativesWrapper, correction.getIncorrectSpelling(),
+                            augmentations, AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0);
+                    }
+                    return termAlternativesWrapper;
+                }
+
+            }
+            catch(Exception ex){
+                log.error("Exception in loading spelling variations", ex);
+            }
+            return null;
+        }
+
+
+        @VisibleForTesting
+        TermAlternativesWrapper loadAugmentationExperiments(){
+            try {
+                List<AugmentationExperiment> augmentationExperiments = this.augmentationDao.getAugmentationExperiements();
+
+                Set<String> correctSet;
+                if(augmentationExperiments != null && augmentationExperiments.size() > 0) {
+                    TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
+                    for (AugmentationExperiment experiment : augmentationExperiments) {
+                        float conf = 0f;
+                        try {
+                            conf = Float.parseFloat(experiment.getContext());
+                        } catch (Exception e) {
+                            //swallow
+                        }
+
+                        String type = experiment.getType();
+                        String correct = experiment.getCorrectQuery();
+                        String incorrect = experiment.getIncorrectQuery();
+                        String sourceName = experiment.getSource();
+                        correctSet = new HashSet<String>();
+
+                        if (type.equalsIgnoreCase(AugmentationExperiment.Type.replace.name())
+                            || type.equalsIgnoreCase(AugmentationExperiment.Type.replaceNoShow.name())) {
+                            correctSet.add(correct);
+                        } else {
+                            // if the type is not replace, then we can have query synonyms or word synonyms.
+                            // Note we use replace for query->query (word ->word replace is not supported)
+                            // Infact query-->query OR makes no sense, it should rather always be query->query replace.
+                            // for space separated words we need to add brackets
+
+                            correctSet.add(correct.contains(" ") ? "(" + correct + ")" : correct);
+                            correctSet.add(incorrect.contains(" ") ? "(" + incorrect + ")" : incorrect);  //add self
+                        }
+
+                        //Note: source is used as context
+                        if (type.equalsIgnoreCase(AugmentationExperiment.Type.term.name())) {
+                            addTermAlternatives(termAlternativesWrapper, incorrect, correctSet, sourceName, type, conf);
+                        } else {
+                            addQueryAlternatives(termAlternativesWrapper, incorrect, correctSet, sourceName, type, conf);
+                        }
+                    }
+                    return termAlternativesWrapper;
+                }
+            }
+            catch(Exception ex){
+                log.error("Exception while loading augmentation experiments", ex);
+            }
+            return null;
+        }
+
 
         private void addTermAlternatives(TermAlternativesWrapper termAlternativesWrapper, String original, Set<String> augmentationSet,
-                                         String context, AugmentAlternative.Type type, float confidence){
+                                         String context, String augType, float confidence){
             Set<AugmentAlternative> augmentAlternatives = createAugmentationEntries(original,
-                augmentationSet, context, type, confidence);
+                augmentationSet, context, augType, confidence);
             //add to term to term map
             termAlternativesWrapper.addTermAlternatives(original, augmentAlternatives);
         }
 
         private void addQueryAlternatives(TermAlternativesWrapper termAlternativesWrapper, String original, Set<String> augmentationSet,
-                                          String context, AugmentAlternative.Type type, float confidence){
+                                          String context, String augType, float confidence){
             Set<AugmentAlternative> augmentAlternatives = createAugmentationEntries(original,
-                augmentationSet, context, type, confidence);
+                augmentationSet, context, augType, confidence);
             //add to query to query map
             termAlternativesWrapper.addQueryAlternatives(original, augmentAlternatives);
         }
 
-        private boolean isValid(String unigram, String bigram) {
 
-//            if (!StringUtils.isBlank(unigram) && !StringUtils.isBlank(bigram)){
-//                Set<String> bigramTokens = Lists.newArrayList(StringUtils.split(bigram, ",")).stream().map(String::trim).collect(Collectors.toSet());
-//                return !(stopWordsSet.containsAll(bigramTokens));
-//            }
-//            return false;
-
-            Set<String> bigramTokens = new HashSet<String>(Arrays.asList(StringUtils.split(bigram, " ,")));
-            if (stopWordsSet.containsAll(bigramTokens)) {
-                return false;
-            } else {
-                return true;
+        private boolean areGramsValid(String unigram, String bigram) {
+            if (!StringUtils.isBlank(unigram) && !StringUtils.isBlank(bigram)){
+                Set<String> bigramTokens = Lists.newArrayList(StringUtils.split(bigram, ",")).stream().map(String::trim).collect(Collectors.toSet());
+                return !(stopWordsSet.containsAll(bigramTokens));
             }
+            return false;
         }
-
 
         //Copied as-is from previous version of semantic
         private float getConfidenceForCompoundWordEntry(String correct, float uni_phits, float uni_shits, float bi_phits,
@@ -309,12 +421,12 @@ public class LocalCachedAugmentDataSource {
 
 
         private Set<AugmentAlternative> createAugmentationEntries(String original, Set<String> augmentationSet, String context,
-                                                                  AugmentAlternative.Type type, float confidence) {
+                                                                  String augType, float confidence) {
             if (!StringUtils.isBlank(original) && augmentationSet != null && augmentationSet.size() > 0
-                && context != null && type != null){
+                && context != null && augType != null){
                 Set<AugmentAlternative> augmentAlternatives = new HashSet<>();
                 for (String currAug : augmentationSet) {
-                    augmentAlternatives.add(new AugmentAlternative(original, currAug, context, type, confidence));
+                    augmentAlternatives.add(new AugmentAlternative(original, currAug, context, augType, confidence));
                 }
                 return augmentAlternatives;
             }
