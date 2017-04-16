@@ -1,7 +1,7 @@
 package com.flipkart.sherlock.semantic.init;
 
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
-import com.flipkart.sherlock.semantic.dao.mysql.SearchConfigsDao;
+import com.flipkart.sherlock.semantic.dao.mysql.ConfigsDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConfig;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConnectionPoolConfig;
 import com.google.inject.AbstractModule;
@@ -53,8 +53,8 @@ public class MysqlDaoProvider extends AbstractModule {
     @Inject
     @Singleton
     @Provides
-    SearchConfigsDao getLogicalGroupingDao(DBI dbi){
-        return dbi.onDemand(SearchConfigsDao.class);
+    ConfigsDao getConfigsDao(DBI dbi){
+        return dbi.onDemand(ConfigsDao.class);
     }
 
     @Inject

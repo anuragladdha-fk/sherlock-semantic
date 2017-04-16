@@ -1,6 +1,6 @@
 package com.flipkart.sherlock.semantic.resources;
 
-import com.flipkart.sherlock.semantic.dao.mysql.SearchConfigsDao;
+import com.flipkart.sherlock.semantic.dao.mysql.ConfigsDao;
 import com.google.inject.Inject;
 
 import javax.ws.rs.GET;
@@ -19,11 +19,11 @@ import javax.ws.rs.core.MediaType;
 //TODO: delete. Only for sample
 @Path("db")
 public class TestDaoResource {
-    private SearchConfigsDao searchConfigsDao;
+    private ConfigsDao configsDao;
 
     @Inject
-    public TestDaoResource(SearchConfigsDao searchConfigsDao) {
-        this.searchConfigsDao = searchConfigsDao;
+    public TestDaoResource(ConfigsDao configsDao) {
+        this.configsDao = configsDao;
     }
 
     @GET
@@ -37,6 +37,6 @@ public class TestDaoResource {
     @Path("param")
     @Produces(MediaType.TEXT_PLAIN)
     public String paramMethod(@QueryParam("name") String name) {
-        return this.searchConfigsDao.getConfig(name, "");
+        return this.configsDao.getConfig(name, "");
     }
 }
