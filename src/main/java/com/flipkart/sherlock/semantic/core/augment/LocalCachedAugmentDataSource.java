@@ -2,6 +2,7 @@ package com.flipkart.sherlock.semantic.core.augment;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.sherlock.semantic.config.Constants;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
@@ -176,11 +177,11 @@ public class LocalCachedAugmentDataSource {
 
                             if (currSynonym.getSynType().equals(Synonym.Type.replace)) {//query to query alternative
                                 addQueryAlternatives(termAlternativesWrapper, currSynonym.getTerm(), augmentations,
-                                    AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name(), 0);
+                                    Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name(), 0);
                             }else {//term to term alternatives
                                 for (String singleSynonym : currItemSynonyms) {
                                     //All alternatives are added to each of the synonym
-                                    addTermAlternatives(termAlternativesWrapper, singleSynonym, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                                    addTermAlternatives(termAlternativesWrapper, singleSynonym, augmentations, Constants.CONTEXT_DEFAULT,
                                         AugmentAlternative.Type.Synonym.name(), 0);
                                 }
                             }
@@ -228,20 +229,20 @@ public class LocalCachedAugmentDataSource {
                     Set<String> augmentations = new HashSet<String>(Arrays.asList(unigram, "(" + bigram + ")"));
                     if ("both".equalsIgnoreCase(correct)) {
                         if (areGramsValid(unigram, bigram)) {
-                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, Constants.CONTEXT_DEFAULT,
                                 AugmentAlternative.Type.CompundWord.name(), conf);
                         }
-                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, Constants.CONTEXT_DEFAULT,
                             AugmentAlternative.Type.CompundWord.name(), conf);
                     }
                     else if ("unigram".equals(correct)) {
                         if (areGramsValid(unigram, bigram)) {
-                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, Constants.CONTEXT_DEFAULT,
                                 AugmentAlternative.Type.CompundWord.name(), conf);
                         }
                     }
                     else if ("bigram".equals(correct)) {
-                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, AugmentationConstants.CONTEXT_DEFAULT,
+                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, Constants.CONTEXT_DEFAULT,
                             AugmentAlternative.Type.CompundWord.name(), conf);
                     }
                 }
@@ -291,7 +292,7 @@ public class LocalCachedAugmentDataSource {
                         augmentations.add(correction.getIncorrectSpelling());
                         //add alternatives for incorrect spelling
                         addTermAlternatives(termAlternativesWrapper, correction.getIncorrectSpelling(),
-                            augmentations, AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0);
+                            augmentations, Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0);
                     }
                     return termAlternativesWrapper;
                 }

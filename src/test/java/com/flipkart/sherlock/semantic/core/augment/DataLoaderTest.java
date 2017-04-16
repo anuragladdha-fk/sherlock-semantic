@@ -2,6 +2,7 @@ package com.flipkart.sherlock.semantic.core.augment;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.sherlock.semantic.config.Constants;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
@@ -20,8 +21,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import static org.mockito.Mockito.*;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by anurag.laddha on 14/04/17.
@@ -73,8 +72,8 @@ public class DataLoaderTest {
          * Compare values in cache for one of the keys
          */
         Set<AugmentAlternative> expectedAugmentations = Sets.newHashSet(
-            new AugmentAlternative("SOURCE1", "replacement1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
-            new AugmentAlternative("SOURCE1", "REPLACEMENT2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()));
+            new AugmentAlternative("SOURCE1", "replacement1", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
+            new AugmentAlternative("SOURCE1", "REPLACEMENT2", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()));
 
         Set<AugmentAlternative> actualAugmentations = termAlternativesWrapper.getQueryAlternatives("source1");
 
@@ -122,9 +121,9 @@ public class DataLoaderTest {
 
 
         Set<AugmentAlternative> expectedAugmentations = Sets.newHashSet(
-            new AugmentAlternative("SOURCE1", "SOURCE1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
-            new AugmentAlternative("SOURCE1", "replacement1", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
-            new AugmentAlternative("SOURCE1", "REPLACEMENT2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name())
+            new AugmentAlternative("SOURCE1", "SOURCE1", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
+            new AugmentAlternative("SOURCE1", "replacement1", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name()),
+            new AugmentAlternative("SOURCE1", "REPLACEMENT2", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name())
         );
 
         Assert.assertTrue(expectedAugmentations.equals(termAlternativesWrapper.getTermAlternatives("source1")));
@@ -175,8 +174,8 @@ public class DataLoaderTest {
 
         //Verify alternatives created for one of the cases: case 1
         Set<AugmentAlternative> expectedAlternatives = Sets.newHashSet(
-            new AugmentAlternative("first bigram", "(first bigram)", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord.name()),
-            new AugmentAlternative("first bigram", "firstunigram", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord.name())
+            new AugmentAlternative("first bigram", "(first bigram)", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord.name()),
+            new AugmentAlternative("first bigram", "firstunigram", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.CompundWord.name())
         );
         Assert.assertTrue(expectedAlternatives.equals(termAlternativesWrapper.getTermAlternatives("first bigram")));
     }
@@ -237,9 +236,9 @@ public class DataLoaderTest {
         //Validate returned value for one of the cases: new2 --> new2, pqr, abc
 
         Set<AugmentAlternative> expectedAlternatives = Sets.newHashSet(
-            new AugmentAlternative("new2", "new2", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0),
-            new AugmentAlternative("new2", "abc", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0),
-            new AugmentAlternative("new2", "pqr", AugmentationConstants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0)
+            new AugmentAlternative("new2", "new2", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0),
+            new AugmentAlternative("new2", "abc", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0),
+            new AugmentAlternative("new2", "pqr", Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0)
         );
         Assert.assertTrue(expectedAlternatives.equals(termAlternativesWrapper.getTermToAlternativesMap().get("new2")));
     }

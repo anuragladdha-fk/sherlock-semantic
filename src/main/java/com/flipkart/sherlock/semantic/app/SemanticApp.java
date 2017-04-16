@@ -3,6 +3,7 @@ package com.flipkart.sherlock.semantic.app;
 
 import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConfig;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConnectionPoolConfig;
+import com.flipkart.sherlock.semantic.init.MiscInitProvider;
 import com.flipkart.sherlock.semantic.init.MysqlDaoProvider;
 import com.flipkart.sherlock.semantic.resources.TestDaoResource;
 import com.flipkart.sherlock.semantic.resources.TestResource;
@@ -34,7 +35,8 @@ public class SemanticApp {
             .setAcquireIncrement(2)
             .setMaxIdleTimeSec((int) TimeUnit.MINUTES.toSeconds(30)).build();
 
-        Injector injector = Guice.createInjector(new MysqlDaoProvider(mysqlConfig, connectionPoolConfig));
+        Injector injector = Guice.createInjector(new MysqlDaoProvider(mysqlConfig, connectionPoolConfig),
+            new MiscInitProvider((int) TimeUnit.MINUTES.toSeconds(30), 10));
         TestResource testResource = injector.getInstance(TestResource.class);
         TestDaoResource testDaoResource = injector.getInstance(TestDaoResource.class);
 

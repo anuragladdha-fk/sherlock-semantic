@@ -9,7 +9,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -40,7 +42,9 @@ public class SearchConfigProvider {
     private int cacheExpireSec;
 
     @Inject
-    public SearchConfigProvider(ConfigsDao configsDao, ExecutorService executorService, int cacheExpireSec) {
+    public SearchConfigProvider(ConfigsDao configsDao,
+                                @Named(Constants.GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE) ExecutorService executorService,
+                                @Named(Constants.GUICE_LOCAL_CACHE_EXPIRY) int cacheExpireSec) {
         this.configsDao = configsDao;
         this.executorService = executorService;
         this.cacheExpireSec = cacheExpireSec;
@@ -110,7 +114,8 @@ public class SearchConfigProvider {
                     try {
                         return SerDeUtils.cast(cachedValue, type);
                     } catch (Exception ex) {
-                        log.warn("Could not convert string: {} to type: {}", cachedValue, type.getName(), ex);
+                        //TODO metrics and alert
+                        log.error("Could not convert string: {} to type: {}", cachedValue, type.getName(), ex);
                     }
                 }
             }
@@ -136,7 +141,8 @@ public class SearchConfigProvider {
                     try {
                         return SerDeUtils.castToGeneric(cachedValue, typeReference);
                     } catch (Exception ex) {
-                        log.warn("Could not convert string: {} to type: {}", cachedValue, typeReference.getType().getTypeName(), ex);
+                        //TODO metrics and alert
+                        log.error("Could not convert string: {} to type: {}", cachedValue, typeReference.getType().getTypeName(), ex);
                     }
                 }
             }
@@ -157,7 +163,13 @@ public class SearchConfigProvider {
     @EqualsAndHashCode
     @ToString
     static class Key {
+        /**
+         * Config name
+         */
         private String config;
+        /**
+         * Bucket or experiment name
+         */
         private String bucket;
     }
 
@@ -174,12 +186,24 @@ public class SearchConfigProvider {
 
         @Override
         public Map<Key, String> load(String s) throws Exception {
-            return null;
+            log.info("Loading search configs");
+            Map<Key, String> allSearchConfigs =  getAllSearchConfigs();
+            log.info("Done loading search configs. Number of elements: {}", allSearchConfigs != null ? allSearchConfigs.size() : 0);
+            return allSearchConfigs;
         }
 
         @Override
         public ListenableFuture<Map<Key, String>> reload(String key, Map<Key, String> oldValue) throws Exception {
-            return super.reload(key, oldValue);
+            log.info("Loading search configs async");
+            ListenableFutureTask<Map<Key, String>> task = ListenableFutureTask.create(() ->{
+                Map<Key, String> allSearchConfigs = getAllSearchConfigs();
+                log.info("Finished fetching search configs async on diff thread. Number of elements : {}",
+                    allSearchConfigs != null ? allSearchConfigs.size() : 0);
+                return allSearchConfigs;
+            });
+            this.executorService.submit(task);
+            log.info("Finished loading search configs async");
+            return task;
         }
 
         @VisibleForTesting
