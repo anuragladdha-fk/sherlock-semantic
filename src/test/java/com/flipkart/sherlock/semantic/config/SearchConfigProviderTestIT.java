@@ -15,7 +15,8 @@ import static org.junit.Assert.*;
  */
 
 /**
- * Integration test for search config provider
+ * Integration test for search config provider.
+ * File name must end in 'IT'
  */
 public class SearchConfigProviderTestIT {
 

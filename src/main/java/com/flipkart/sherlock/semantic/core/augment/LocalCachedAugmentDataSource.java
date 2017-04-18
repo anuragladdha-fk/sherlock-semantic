@@ -3,6 +3,7 @@ package com.flipkart.sherlock.semantic.core.augment;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.sherlock.semantic.config.Constants;
+import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
@@ -14,7 +15,9 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,26 +36,55 @@ import java.util.stream.Collectors;
 public class LocalCachedAugmentDataSource {
 
     private LoadingCache<String, TermAlternativesWrapper> augmentCache;
-    private AugmentationDao augmentationDao;
-    private RawQueriesDao rawQueriesDao;
-    private ExecutorService executorService;
-    private ObjectMapper objectMapper;
 
     @Inject
-    public LocalCachedAugmentDataSource(AugmentationDao augmentationDao, RawQueriesDao rawQueriesDao, ExecutorService executorService,
-                                        ObjectMapper objectMapper, int cacheExpireSec) {
-        this.augmentationDao = augmentationDao;
-        this.rawQueriesDao = rawQueriesDao;
-        this.executorService = executorService;
-        this.objectMapper = objectMapper;
+    public LocalCachedAugmentDataSource(AugmentationDao augmentationDao,
+                                        RawQueriesDao rawQueriesDao,
+                                        SearchConfigProvider searchConfigProvider,
+                                        @Named(Constants.GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE) ExecutorService executorService,
+                                        ObjectMapper objectMapper,
+                                        @Named(Constants.GUICE_LOCAL_CACHE_EXPIRY) int cacheExpireSec) {
+
         DataLoader dataLoader = new DataLoader(augmentationDao, rawQueriesDao, executorService, objectMapper);
-        this.augmentCache = CacheBuilder.newBuilder().maximumSize(10).refreshAfterWrite(cacheExpireSec, TimeUnit.SECONDS).build(dataLoader);
+        this.augmentCache = CacheBuilder.newBuilder().maximumSize(10).refreshAfterWrite(cacheExpireSec, TimeUnit.SECONDS)
+            .build(dataLoader);
+    }
+
+    public Set<AugmentAlternative> getTermAlternatives(String term){
+        if (!StringUtils.isBlank(term)){
+            TermAlternativesWrapper termAlternativesWrapper = getAlternativesFromCache();
+            if (termAlternativesWrapper != null){
+                return termAlternativesWrapper.getTermAlternatives(term);
+            }
+        }
+        return null;
+    }
+
+    public Set<AugmentAlternative> getQueryAlternatives(String query){
+        if (!StringUtils.isBlank(query)){
+            TermAlternativesWrapper termAlternativesWrapper = getAlternativesFromCache();
+            if (termAlternativesWrapper != null){
+                return termAlternativesWrapper.getQueryAlternatives(query);
+            }
+        }
+        return null;
+    }
+
+    private  TermAlternativesWrapper getAlternativesFromCache(){
+        TermAlternativesWrapper termAlternativesWrapper = null;
+        try {
+            termAlternativesWrapper = this.augmentCache.get(Constants.DUMMY_KEY);
+        }
+        catch(Exception ex){
+            log.error("Error while fetching term and query alternatives", ex);
+            //todo metric + alert
+        }
+        return termAlternativesWrapper;
     }
 
     /**
-     * Data coming from multiple tables, for different type of replacements, prevent map merges
+     * Data coming from multiple tables, for different type of replacements
      */
-
     static class TermAlternativesWrapper {
         @Getter
         private Map<String, Set<AugmentAlternative>> termToAlternativesMap;
@@ -72,6 +104,14 @@ public class LocalCachedAugmentDataSource {
             MapUtils.addEntriesToTargetMapValueSet(this.queryToAlternativesMap, convertToKey(query), alternatives);
         }
 
+        public void addTermAlternatives(Map<String, Set<AugmentAlternative>> termAlternatives){
+            MapUtils.mergeMapWithValueSet(this.termToAlternativesMap, termAlternatives);
+        }
+
+        public void addQueryAlternatives(Map<String, Set<AugmentAlternative>> queryAlternatives){
+            MapUtils.mergeMapWithValueSet(this.queryToAlternativesMap, queryAlternatives);
+        }
+
         public Set<AugmentAlternative> getTermAlternatives(String term){
             return this.termToAlternativesMap != null ? this.termToAlternativesMap.get(convertToKey(term)) : null;
         }
@@ -79,15 +119,6 @@ public class LocalCachedAugmentDataSource {
         public Set<AugmentAlternative> getQueryAlternatives(String query){
             return this.queryToAlternativesMap != null ? this.queryToAlternativesMap.get(convertToKey(query)) : null;
         }
-    }
-
-
-    /**
-     * Type of augmentation data
-     * Need not be visible to the external world
-     */
-    private static enum AugInfoType {
-        TermToTerm, QueryToQuery, Negatives
     }
 
     /**
@@ -101,10 +132,6 @@ public class LocalCachedAugmentDataSource {
         private ExecutorService executorService;
         private ObjectMapper objectMapper;
 
-        //TODO this can come from config
-        private static final Set<String> stopWordsSet = Sets.newHashSet("&", "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it", "no",
-            "not", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these", "they", "this", "to", "was", "will", "with");
-
         public DataLoader(AugmentationDao augmentationDao, RawQueriesDao rawQueriesDao, ExecutorService executorService,
                           ObjectMapper objectMapper) {
             this.augmentationDao = augmentationDao;
@@ -115,19 +142,51 @@ public class LocalCachedAugmentDataSource {
 
         @Override
         public TermAlternativesWrapper load(String s) throws Exception {
-            return null;
+            log.info("Fetching query and term alternatives");
+            TermAlternativesWrapper termAlternativesWrapper = getAllTermAlternatives();
+            log.info("Finished fetching query and term alternatives");
+            return termAlternativesWrapper;
         }
 
         @Override
         public ListenableFuture<TermAlternativesWrapper> reload(String key, TermAlternativesWrapper oldValue) throws Exception {
-            return super.reload(key, oldValue);
+            log.info("Queued loading query and term alternatives async");
+            ListenableFutureTask<TermAlternativesWrapper> task = ListenableFutureTask.create(() -> {
+                log.info("Started loading query and term alternatives async");
+                TermAlternativesWrapper termAlternativesWrapper = getAllTermAlternatives();
+                log.info("Finished loading query and term alternatives async on diff thread");
+                return termAlternativesWrapper;
+            });
+
+            this.executorService.submit(task);
+            return task;
         }
 
+        //TODO test case
+        @VisibleForTesting
+        TermAlternativesWrapper getAllTermAlternatives(){
+            /**
+             * Get term and query alternatives from various sources
+             * Merge alternatives by type
+             */
 
-        private Set<String> getStopwords(){
-            //TODO get from search config if we need to 'shouldNegateStopWordsInAugment'.
-            return stopWordsSet;
+            Set<TermAlternativesWrapper> termAlternativesSet = new HashSet<>();
+            termAlternativesSet.add(getSynonymAugmentations());
+            termAlternativesSet.add(loadCompoundWords(true));
+            termAlternativesSet.add(loadCompoundWords(false));
+            termAlternativesSet.add(loadSpellVariations());
+            termAlternativesSet.add(loadAugmentationExperiments());
+
+            TermAlternativesWrapper allTermAlternatives = new TermAlternativesWrapper();
+
+            //Merge
+            for (TermAlternativesWrapper currEntry : termAlternativesSet) {
+                allTermAlternatives.addTermAlternatives(currEntry.getTermToAlternativesMap());
+                allTermAlternatives.addQueryAlternatives(currEntry.getQueryToAlternativesMap());
+            }
+            return allTermAlternatives;
         }
+
 
         @VisibleForTesting
         TermAlternativesWrapper getSynonymAugmentations() {
@@ -252,18 +311,6 @@ public class LocalCachedAugmentDataSource {
         }
 
         @VisibleForTesting
-        Set<String> loadNegatives(){
-            try {
-                return this.augmentationDao.getNegatives();
-            }
-            catch(Exception e){
-                log.error("Exception while getting negative list", e);
-            }
-            return null;
-        }
-
-
-        @VisibleForTesting
         TermAlternativesWrapper loadSpellVariations(){
             try {
                 List<SpellCorrection> allSpellCorrections = new ArrayList<>();
@@ -377,7 +424,7 @@ public class LocalCachedAugmentDataSource {
         private boolean areGramsValid(String unigram, String bigram) {
             if (!StringUtils.isBlank(unigram) && !StringUtils.isBlank(bigram)){
                 Set<String> bigramTokens = Lists.newArrayList(StringUtils.split(bigram, ",")).stream().map(String::trim).collect(Collectors.toSet());
-                return !(stopWordsSet.containsAll(bigramTokens));
+                return !(Constants.stopWordsSet.containsAll(bigramTokens));
             }
             return false;
         }

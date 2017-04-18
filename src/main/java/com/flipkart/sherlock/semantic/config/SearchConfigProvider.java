@@ -20,9 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -71,7 +69,7 @@ public class SearchConfigProvider {
                 }
             }
         }
-        return null;
+        return getSearchConfig(key, empty, type);
     }
 
 
@@ -93,7 +91,7 @@ public class SearchConfigProvider {
                 }
             }
         }
-        return null;
+        return getSearchConfig(key, empty, typeReference);
     }
 
 
@@ -194,15 +192,15 @@ public class SearchConfigProvider {
 
         @Override
         public ListenableFuture<Map<Key, String>> reload(String key, Map<Key, String> oldValue) throws Exception {
-            log.info("Loading search configs async");
+            log.info("Queued loading search configs async");
             ListenableFutureTask<Map<Key, String>> task = ListenableFutureTask.create(() ->{
+                log.info("Started loading search configs async");
                 Map<Key, String> allSearchConfigs = getAllSearchConfigs();
                 log.info("Finished fetching search configs async on diff thread. Number of elements : {}",
                     allSearchConfigs != null ? allSearchConfigs.size() : 0);
                 return allSearchConfigs;
             });
             this.executorService.submit(task);
-            log.info("Finished loading search configs async");
             return task;
         }
 

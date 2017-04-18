@@ -182,18 +182,6 @@ public class DataLoaderTest {
 
 
     @Test
-    public void testGetNegativeList(){
-
-        Set<String> expectedNegatives = Sets.newHashSet("n1", "n2");
-        when(augmentationDaoMock.getNegatives()).thenReturn(expectedNegatives);
-        DataLoader dataLoader = new DataLoader(augmentationDaoMock, rawQueriesDaoMock, executorServiceMock, objectMapper);
-
-        Set<String> actualNegatives = dataLoader.loadNegatives();
-        System.out.println("Actual negatives: " + actualNegatives);
-        Assert.assertTrue(expectedNegatives.equals(actualNegatives));
-    }
-
-    @Test
     public void testStringSet() throws Exception{
         Set<String> stringSet = Sets.newHashSet("abc", "pqr");
         System.out.println(objectMapper.writeValueAsString(stringSet));

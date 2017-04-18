@@ -10,6 +10,10 @@ import java.io.IOException;
 /**
  * Created by anurag.laddha on 15/04/17.
  */
+
+/**
+ * Serialisation/Deserialisation utils
+ */
 public class SerDeUtils {
 
     private static ObjectMapper objectMapper;
@@ -41,5 +45,12 @@ public class SerDeUtils {
         else{
             return !StringUtils.isBlank(value) ? objectMapper.readValue(value, clazz) : null;
         }
+    }
+
+    /**
+     * Returns value if it is not null, else returns default
+     */
+    public static <T> T getValueOrDefault(T value, T defaultValue){
+        return value != null ? value : defaultValue;
     }
 }
