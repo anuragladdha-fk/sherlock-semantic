@@ -11,9 +11,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
@@ -28,6 +30,9 @@ public class SemanticApp {
     public static void main(String[] args) throws Exception {
 
         //TODO get details from config service.
+
+        //TODO way to copy solr core details at a suitable location and setting that as solr home
+        System.setProperty("solr.solr.home", "/tmp/solrhome/solr");
 
         MysqlConfig mysqlConfig = new MysqlConfig("localhost", 3306, "root", "", "sherlock");
         MysqlConnectionPoolConfig connectionPoolConfig = new MysqlConnectionPoolConfig.MysqlConnectionPoolConfigBuilder(1,10)
@@ -45,19 +50,49 @@ public class SemanticApp {
         threadPool.setName("Jetty-container");
 
         Server server = new Server(threadPool);   //Create embedded jetty container
-        ServerConnector httpConnector = new ServerConnector(server);
-        httpConnector.setPort(9001);
-        server.addConnector(httpConnector);
 
+        //connection 1
+        ServerConnector connectorA = new ServerConnector(server);
+        connectorA.setPort(9001);
+        connectorA.setName("webapplication");
+        server.addConnector(connectorA);
+
+        //connection 2
+        ServerConnector connectorB = new ServerConnector(server);
+        connectorB.setPort(10001);
+        connectorB.setName("solr");
+        server.addConnector(connectorB);
+
+        // Collection of Contexts
+        ContextHandlerCollection contexts = new ContextHandlerCollection();
+
+        /**
+         * Connection 1
+         */
         //Add resource classes explicitly. Cannot read from web.xml since we are using Guice DI.
         ResourceConfig resourceConfig = new ResourceConfig()
             .register(testResource)
             .register(testDaoResource);
 
-        ServletContextHandler handler = new ServletContextHandler();
-        handler.setContextPath("/");
-        handler.addServlet(new ServletHolder(new ServletContainer(resourceConfig)), "/*");
-        server.setHandler(handler);
+        ServletContextHandler contextDefault = new ServletContextHandler();
+        contextDefault.setContextPath("/");
+        contextDefault.addServlet(new ServletHolder(new ServletContainer(resourceConfig)), "/*");
+        contextDefault.setVirtualHosts(new String[]{"@webapplication"});
+        contexts.addHandler(contextDefault);
+
+        /**
+         * Connection 2
+         */
+        //handler for solr
+        String warLocation = SemanticApp.class.getResource("/web/WEB-INF/solr.war").toString();
+        System.out.println("War location: " + warLocation);
+        WebAppContext contextWar = new WebAppContext();
+        contextWar.setContextPath("/");
+        contextWar.setWar(warLocation);
+        contextWar.setVirtualHosts(new String[]{"@solr"});
+        contexts.addHandler(contextWar);
+
+        server.setHandler(contexts);
 
         try {
             server.start();

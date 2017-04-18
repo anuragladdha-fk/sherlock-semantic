@@ -148,6 +148,14 @@
         </dependency>
         <!--end of logging dependencies -->
 
+        <!-- solr requirement -->
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <!-- end of solr requirement -->
+
         <!-- testing -->
         <dependency>
             <groupId>junit</groupId>
