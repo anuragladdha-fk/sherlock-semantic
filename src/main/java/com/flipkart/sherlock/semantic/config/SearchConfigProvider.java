@@ -11,6 +11,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * Created by anurag.laddha on 15/04/17.
  */
 
+@Singleton
 public class SearchConfigProvider {
 
     private static final Logger log = LoggerFactory.getLogger(SearchConfigProvider.class);

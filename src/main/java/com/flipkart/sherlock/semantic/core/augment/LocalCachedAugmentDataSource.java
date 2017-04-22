@@ -3,7 +3,6 @@ package com.flipkart.sherlock.semantic.core.augment;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.sherlock.semantic.config.Constants;
-import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
@@ -17,6 +16,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 //TODO data source can have interface
 
 @Slf4j
+@Singleton
 public class LocalCachedAugmentDataSource {
 
     private LoadingCache<String, TermAlternativesWrapper> augmentCache;
@@ -40,7 +41,6 @@ public class LocalCachedAugmentDataSource {
     @Inject
     public LocalCachedAugmentDataSource(AugmentationDao augmentationDao,
                                         RawQueriesDao rawQueriesDao,
-                                        SearchConfigProvider searchConfigProvider,
                                         @Named(Constants.GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE) ExecutorService executorService,
                                         ObjectMapper objectMapper,
                                         @Named(Constants.GUICE_LOCAL_CACHE_EXPIRY) int cacheExpireSec) {

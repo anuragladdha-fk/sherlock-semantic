@@ -80,7 +80,7 @@ public class LocalCachedAugmentDataSourceTest {
 
         //Initialise data source with mocked objects
         LocalCachedAugmentDataSource dataSource = new LocalCachedAugmentDataSource(augmentationDaoMock, rawQueriesDaoMock,
-            searchConfigProviderMock, executorServiceMock, objectMapper, 30);
+            executorServiceMock, objectMapper, 30);
 
         //swap internal loading cache with mocked cache - now loading cache will return what we have set it up with
         Whitebox.setInternalState(dataSource, "augmentCache", augmentCacheMock);

@@ -11,6 +11,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 /**
  * Created by anurag.laddha on 18/04/17.
  */
+
+@Singleton
 public class CachedNegativesDataSource {
 
     private static final Logger log = LoggerFactory.getLogger(CachedNegativesDataSource.class);
