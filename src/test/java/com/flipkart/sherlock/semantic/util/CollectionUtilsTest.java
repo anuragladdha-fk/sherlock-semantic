@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Created by anurag.laddha on 13/04/17.
  */
-public class MapUtilsTest {
+public class CollectionUtilsTest {
 
     @Test
     public void testAddSingleEntryToTargetMapValueSet(){
@@ -20,19 +20,19 @@ public class MapUtilsTest {
         origMap.put("k1", Sets.newHashSet("v1"));
 
          /* Test if a key value pair is added if the key already exists in map */
-        MapUtils.addSingleEntryToTargetMapValueSet(origMap, "k1", "v2");
+        CollectionUtils.addSingleEntryToTargetMapValueSet(origMap, "k1", "v2");
         Assert.assertEquals(1, origMap.keySet().size());
         Assert.assertTrue(Sets.newHashSet("v1", "v2").equals(origMap.get("k1")));
 
          /* Test if a key value pair is added if a new key the key does not exist in the mapm*/
-        MapUtils.addSingleEntryToTargetMapValueSet(origMap, "k2", "v");
+        CollectionUtils.addSingleEntryToTargetMapValueSet(origMap, "k2", "v");
         Assert.assertEquals(2, origMap.keySet().size());
         Assert.assertTrue(Sets.newHashSet("v").equals(origMap.get("k2")));
 
         /* Test if exception is thrown for null map */
         boolean exceptionThrowForNullMap = false;
         try {
-            MapUtils.addSingleEntryToTargetMapValueSet(null, "k1", "v2");
+            CollectionUtils.addSingleEntryToTargetMapValueSet(null, "k1", "v2");
         }
         catch(Exception e){
             exceptionThrowForNullMap = true;
@@ -48,24 +48,24 @@ public class MapUtilsTest {
         Map<String, Set<String>> origMap = new HashMap<>();
 
         //Add some elements to a key (k1)
-        MapUtils.addEntriesToTargetMapValueSet(origMap, "k1", Sets.newHashSet("a", "b"));
+        CollectionUtils.addEntriesToTargetMapValueSet(origMap, "k1", Sets.newHashSet("a", "b"));
         Assert.assertEquals(1, origMap.keySet().size());
         Assert.assertTrue(Sets.newHashSet("a", "b").equals(origMap.get("k1")));
 
         //Add some more elements to the same key (k1)
-        MapUtils.addEntriesToTargetMapValueSet(origMap, "k1", Sets.newHashSet("c", "d"));
+        CollectionUtils.addEntriesToTargetMapValueSet(origMap, "k1", Sets.newHashSet("c", "d"));
         Assert.assertEquals(1, origMap.keySet().size());
         Assert.assertTrue(Sets.newHashSet("a", "b", "c", "d").equals(origMap.get("k1")));
 
         //Add some elements to another key (k2)
-        MapUtils.addEntriesToTargetMapValueSet(origMap, "k2", Sets.newHashSet("a", "b"));
+        CollectionUtils.addEntriesToTargetMapValueSet(origMap, "k2", Sets.newHashSet("a", "b"));
         Assert.assertTrue(Sets.newHashSet("k1", "k2").equals(origMap.keySet()));
         Assert.assertTrue(Sets.newHashSet("a", "b").equals(origMap.get("k2")));
 
         /* Test if exception is thrown for null map */
         boolean exceptionThrowForNullMap = false;
         try {
-            MapUtils.addEntriesToTargetMapValueSet(null, "k1", Sets.newHashSet("v1"));
+            CollectionUtils.addEntriesToTargetMapValueSet(null, "k1", Sets.newHashSet("v1"));
         }
         catch(Exception e){
             exceptionThrowForNullMap = true;
@@ -89,7 +89,7 @@ public class MapUtilsTest {
         map2.put("k1", Sets.newHashSet("b"));
         map2.put("k3", Sets.newHashSet("a"));
 
-        MapUtils.mergeMapWithValueSet(map1, map2);
+        CollectionUtils.mergeMapWithValueSet(map1, map2);
 
         Assert.assertEquals(3, map1.keySet().size());
         Assert.assertTrue(Sets.newHashSet("k1", "k2", "k3").equals(map1.keySet()));

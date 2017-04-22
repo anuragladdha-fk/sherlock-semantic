@@ -6,7 +6,7 @@ import com.flipkart.sherlock.semantic.config.Constants;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
-import com.flipkart.sherlock.semantic.util.MapUtils;
+import com.flipkart.sherlock.semantic.util.CollectionUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -95,19 +95,19 @@ public class LocalCachedTermAlternativesDataSource {
         }
 
         public void addTermAlternatives(String term, Set<AugmentAlternative> alternatives){
-            MapUtils.addEntriesToTargetMapValueSet(this.termToAlternativesMap, convertToKey(term), alternatives);
+            CollectionUtils.addEntriesToTargetMapValueSet(this.termToAlternativesMap, convertToKey(term), alternatives);
         }
 
         public void addQueryAlternatives(String query, Set<AugmentAlternative> alternatives){
-            MapUtils.addEntriesToTargetMapValueSet(this.queryToAlternativesMap, convertToKey(query), alternatives);
+            CollectionUtils.addEntriesToTargetMapValueSet(this.queryToAlternativesMap, convertToKey(query), alternatives);
         }
 
         public void addTermAlternatives(Map<String, Set<AugmentAlternative>> termAlternatives){
-            MapUtils.mergeMapWithValueSet(this.termToAlternativesMap, termAlternatives);
+            CollectionUtils.mergeMapWithValueSet(this.termToAlternativesMap, termAlternatives);
         }
 
         public void addQueryAlternatives(Map<String, Set<AugmentAlternative>> queryAlternatives){
-            MapUtils.mergeMapWithValueSet(this.queryToAlternativesMap, queryAlternatives);
+            CollectionUtils.mergeMapWithValueSet(this.queryToAlternativesMap, queryAlternatives);
         }
 
         public Set<AugmentAlternative> getTermAlternatives(String term){
@@ -169,11 +169,11 @@ public class LocalCachedTermAlternativesDataSource {
              */
 
             Set<TermAlternativesWrapper> termAlternativesSet = new HashSet<>();
-            MapUtils.addToSet(termAlternativesSet, getSynonymAugmentations());
-            MapUtils.addToSet(termAlternativesSet, loadCompoundWords(true));
-            MapUtils.addToSet(termAlternativesSet, loadCompoundWords(false));
-            MapUtils.addToSet(termAlternativesSet, loadSpellVariations());
-            MapUtils.addToSet(termAlternativesSet, loadAugmentationExperiments());
+            CollectionUtils.addToSet(termAlternativesSet, getSynonymAugmentations());
+            CollectionUtils.addToSet(termAlternativesSet, loadCompoundWords(true));
+            CollectionUtils.addToSet(termAlternativesSet, loadCompoundWords(false));
+            CollectionUtils.addToSet(termAlternativesSet, loadSpellVariations());
+            CollectionUtils.addToSet(termAlternativesSet, loadAugmentationExperiments());
 
             TermAlternativesWrapper allTermAlternatives = new TermAlternativesWrapper();
 

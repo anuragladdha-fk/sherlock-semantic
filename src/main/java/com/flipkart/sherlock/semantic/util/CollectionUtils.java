@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Created by anurag.laddha on 13/04/17.
  */
-public class MapUtils {
+public class CollectionUtils {
 
     /**
      * Add value for given key to given map.
