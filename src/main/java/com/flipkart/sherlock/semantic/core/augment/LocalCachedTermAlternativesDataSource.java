@@ -30,20 +30,18 @@ import java.util.stream.Collectors;
  * Created by anurag.laddha on 12/04/17.
  */
 
-//TODO data source can have interface
-
 @Slf4j
 @Singleton
-public class LocalCachedAugmentDataSource {
+public class LocalCachedTermAlternativesDataSource {
 
     private LoadingCache<String, TermAlternativesWrapper> augmentCache;
 
     @Inject
-    public LocalCachedAugmentDataSource(AugmentationDao augmentationDao,
-                                        RawQueriesDao rawQueriesDao,
-                                        @Named(Constants.GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE) ExecutorService executorService,
-                                        ObjectMapper objectMapper,
-                                        @Named(Constants.GUICE_LOCAL_CACHE_EXPIRY) int cacheExpireSec) {
+    public LocalCachedTermAlternativesDataSource(AugmentationDao augmentationDao,
+                                                 RawQueriesDao rawQueriesDao,
+                                                 @Named(Constants.GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE) ExecutorService executorService,
+                                                 ObjectMapper objectMapper,
+                                                 @Named(Constants.GUICE_LOCAL_CACHE_EXPIRY) int cacheExpireSec) {
 
         DataLoader dataLoader = new DataLoader(augmentationDao, rawQueriesDao, executorService, objectMapper);
         this.augmentCache = CacheBuilder.newBuilder().maximumSize(10).refreshAfterWrite(cacheExpireSec, TimeUnit.SECONDS)

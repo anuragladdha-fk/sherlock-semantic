@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
-import com.flipkart.sherlock.semantic.core.augment.LocalCachedAugmentDataSource.*;
+import com.flipkart.sherlock.semantic.core.augment.LocalCachedTermAlternativesDataSource.*;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
@@ -21,14 +21,12 @@ import java.util.concurrent.ExecutorService;
 
 import static org.mockito.Mockito.*;
 
-import static org.junit.Assert.*;
-
 /**
  * Created by anurag.laddha on 18/04/17.
  */
 
 @RunWith(PowerMockRunner.class)
-public class LocalCachedAugmentDataSourceTest {
+public class LocalCachedTermAlternativesDataSourceTest {
 
     @Mock
     AugmentationDao augmentationDaoMock;
@@ -79,7 +77,7 @@ public class LocalCachedAugmentDataSourceTest {
         when(augmentCacheMock.get(anyString())).thenReturn(expectedAlternative);
 
         //Initialise data source with mocked objects
-        LocalCachedAugmentDataSource dataSource = new LocalCachedAugmentDataSource(augmentationDaoMock, rawQueriesDaoMock,
+        LocalCachedTermAlternativesDataSource dataSource = new LocalCachedTermAlternativesDataSource(augmentationDaoMock, rawQueriesDaoMock,
             executorServiceMock, objectMapper, 30);
 
         //swap internal loading cache with mocked cache - now loading cache will return what we have set it up with

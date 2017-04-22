@@ -9,7 +9,6 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +46,7 @@ public class AugmentationConfigProvider {
             configFromDB = SerDeUtils.getValueOrDefault(this.searchConfigProvider.getSearchConfig(augConfigDbKey,
                 stringMapTypeRef), null);
         } catch (Exception e) {
-            log.error("Error while reading Augmentation search config: " + e.toString());
+            log.error("Error while reading Augmentation search config: ", e);
         }
 
         if (configFromDB != null) {

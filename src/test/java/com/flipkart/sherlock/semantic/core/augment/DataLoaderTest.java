@@ -6,7 +6,7 @@ import com.flipkart.sherlock.semantic.config.Constants;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
-import com.flipkart.sherlock.semantic.core.augment.LocalCachedAugmentDataSource.*;
+import com.flipkart.sherlock.semantic.core.augment.LocalCachedTermAlternativesDataSource.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;

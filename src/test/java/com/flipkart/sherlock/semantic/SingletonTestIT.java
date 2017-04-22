@@ -3,7 +3,7 @@ package com.flipkart.sherlock.semantic;
 import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
 import com.flipkart.sherlock.semantic.core.augment.AugmentationConfigProvider;
 import com.flipkart.sherlock.semantic.core.augment.CachedNegativesDataSource;
-import com.flipkart.sherlock.semantic.core.augment.LocalCachedAugmentDataSource;
+import com.flipkart.sherlock.semantic.core.augment.LocalCachedTermAlternativesDataSource;
 import com.flipkart.sherlock.semantic.util.TestContext;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -36,8 +36,8 @@ public class SingletonTestIT {
 
     @Test
     public void testLocalCachedAugmentDataSourceSingleTon(){
-        LocalCachedAugmentDataSource localCachedAugmentDataSource1 = TestContext.getInstance(LocalCachedAugmentDataSource.class);
-        LocalCachedAugmentDataSource localCachedAugmentDataSource2 = TestContext.getInstance(LocalCachedAugmentDataSource.class);
-        Assert.assertTrue(localCachedAugmentDataSource1 == localCachedAugmentDataSource2);
+        LocalCachedTermAlternativesDataSource localCachedTermAlternativesDataSource1 = TestContext.getInstance(LocalCachedTermAlternativesDataSource.class);
+        LocalCachedTermAlternativesDataSource localCachedTermAlternativesDataSource2 = TestContext.getInstance(LocalCachedTermAlternativesDataSource.class);
+        Assert.assertTrue(localCachedTermAlternativesDataSource1 == localCachedTermAlternativesDataSource2);
     }
 }
