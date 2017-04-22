@@ -64,7 +64,7 @@ public class AugmentationConfigProvider {
 
                 //just add the ones not enabled.
                 if (!isEnabled) {
-                    disabledExperiments.add(entry.getKey());
+                    disabledExperiments.add(entry.getKey().trim().toLowerCase());
                 }
             }
         }
