@@ -35,7 +35,7 @@ public class TestContext {
                         .setMaxIdleTimeSec((int) TimeUnit.MINUTES.toSeconds(30)).build();
 
                     injector = Guice.createInjector(new MysqlDaoProvider(mysqlConfig, connectionPoolConfig),
-                        new MiscInitProvider(3, 5));
+                        new MiscInitProvider(10, 5));
                 }
             }
         }

@@ -66,7 +66,40 @@ public class MapUtils {
             secondMap.entrySet().forEach(entry -> {
                 addEntriesToTargetMapValueSet(firstMap, entry.getKey(), entry.getValue());
             });
+            return true;
+        }
+        return false;
+    }
 
+    /**
+     * Add multiple elements to a set
+     * @param destinationSet: set to add elements to
+     * @param sourceSet: set of elements to add
+     */
+    public static <T> boolean addToSet(Set<T> destinationSet, Set<T> sourceSet){
+        if (destinationSet == null){
+            throw new RuntimeException("Destination set must already be initialised");
+        }
+
+        if (sourceSet != null && sourceSet.size() > 0){
+            destinationSet.addAll(sourceSet);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Add single element to a set
+     * @param destinationSet: set to add elements to
+     * @param element: element to add to set
+     */
+    public static <T> boolean addToSet(Set<T> destinationSet, T element){
+        if (destinationSet == null){
+            throw new RuntimeException("Destination set must already be initialised");
+        }
+
+        if (element != null){
+            destinationSet.add(element);
             return true;
         }
         return false;

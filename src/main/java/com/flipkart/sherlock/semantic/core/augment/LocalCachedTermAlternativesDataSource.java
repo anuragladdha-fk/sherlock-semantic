@@ -169,18 +169,20 @@ public class LocalCachedTermAlternativesDataSource {
              */
 
             Set<TermAlternativesWrapper> termAlternativesSet = new HashSet<>();
-            termAlternativesSet.add(getSynonymAugmentations());
-            termAlternativesSet.add(loadCompoundWords(true));
-            termAlternativesSet.add(loadCompoundWords(false));
-            termAlternativesSet.add(loadSpellVariations());
-            termAlternativesSet.add(loadAugmentationExperiments());
+            MapUtils.addToSet(termAlternativesSet, getSynonymAugmentations());
+            MapUtils.addToSet(termAlternativesSet, loadCompoundWords(true));
+            MapUtils.addToSet(termAlternativesSet, loadCompoundWords(false));
+            MapUtils.addToSet(termAlternativesSet, loadSpellVariations());
+            MapUtils.addToSet(termAlternativesSet, loadAugmentationExperiments());
 
             TermAlternativesWrapper allTermAlternatives = new TermAlternativesWrapper();
 
             //Merge
             for (TermAlternativesWrapper currEntry : termAlternativesSet) {
-                allTermAlternatives.addTermAlternatives(currEntry.getTermToAlternativesMap());
-                allTermAlternatives.addQueryAlternatives(currEntry.getQueryToAlternativesMap());
+                if(currEntry != null) {
+                    allTermAlternatives.addTermAlternatives(currEntry.getTermToAlternativesMap());
+                    allTermAlternatives.addQueryAlternatives(currEntry.getQueryToAlternativesMap());
+                }
             }
             return allTermAlternatives;
         }
@@ -205,46 +207,56 @@ public class LocalCachedTermAlternativesDataSource {
              *          syn2 --> termA, syn1, syn2
              */
             if (this.augmentationDao != null) {
-                List<Synonym> allSynonyms = this.augmentationDao.getSynonyms();
+                try {
+                    List<Synonym> allSynonyms = this.augmentationDao.getSynonyms();
 
-                if (allSynonyms != null && allSynonyms.size() > 0) {
-                    TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
-                    Set<String> currItemSynonyms;
-                    Set<String> augmentations;
+                    if (allSynonyms != null && allSynonyms.size() > 0) {
+                        log.info("Number of synonyms fetched: {}", allSynonyms.size());
+                        TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
+                        Set<String> currItemSynonyms;
+                        Set<String> augmentations;
 
-                    for (Synonym currSynonym : allSynonyms) {
-                        if (!StringUtils.isBlank(currSynonym.getSynonyms())) {
+                        for (Synonym currSynonym : allSynonyms) {
+                            if (!StringUtils.isBlank(currSynonym.getSynonyms())) {
 
-                            augmentations = new HashSet<String>();
-                            currItemSynonyms = Sets.newHashSet(currSynonym.getSynonyms().split(","));
+                                augmentations = new HashSet<String>();
+                                currItemSynonyms = Sets.newHashSet(currSynonym.getSynonyms().split(","));
 
-                            if (!currSynonym.getSynType().equals(Synonym.Type.replace)) {
-                                currItemSynonyms.add(currSynonym.getTerm());;
-                            }
-
-                            for (String synonym : currItemSynonyms) {
-                                synonym = synonym.replaceAll("\\s+", " ").trim();
-                                // in case of replace, mostly we have query to query replace and putting an extra braces is not what we want.
-                                if (synonym.contains(" ") && !currSynonym.getSynType().equals(Synonym.Type.replace)) {
-                                    augmentations.add("(" + synonym + ")");
-                                } else {
-                                    augmentations.add(synonym);
+                                if (!currSynonym.getSynType().equals(Synonym.Type.replace)) {
+                                    currItemSynonyms.add(currSynonym.getTerm());
+                                    ;
                                 }
-                            }
 
-                            if (currSynonym.getSynType().equals(Synonym.Type.replace)) {//query to query alternative
-                                addQueryAlternatives(termAlternativesWrapper, currSynonym.getTerm(), augmentations,
-                                    Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name(), 0);
-                            }else {//term to term alternatives
-                                for (String singleSynonym : currItemSynonyms) {
-                                    //All alternatives are added to each of the synonym
-                                    addTermAlternatives(termAlternativesWrapper, singleSynonym, augmentations, Constants.CONTEXT_DEFAULT,
-                                        AugmentAlternative.Type.Synonym.name(), 0);
+                                for (String synonym : currItemSynonyms) {
+                                    synonym = synonym.replaceAll("\\s+", " ").trim();
+                                    // in case of replace, mostly we have query to query replace and putting an extra braces is not what we want.
+                                    if (synonym.contains(" ") && !currSynonym.getSynType().equals(Synonym.Type.replace)) {
+                                        augmentations.add("(" + synonym + ")");
+                                    } else {
+                                        augmentations.add(synonym);
+                                    }
+                                }
+
+                                if (currSynonym.getSynType().equals(Synonym.Type.replace)) {//query to query alternative
+                                    addQueryAlternatives(termAlternativesWrapper, currSynonym.getTerm(), augmentations,
+                                        Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.Synonym.name(), 0);
+                                } else {//term to term alternatives
+                                    for (String singleSynonym : currItemSynonyms) {
+                                        //All alternatives are added to each of the synonym
+                                        addTermAlternatives(termAlternativesWrapper, singleSynonym, augmentations, Constants.CONTEXT_DEFAULT,
+                                            AugmentAlternative.Type.Synonym.name(), 0);
+                                    }
                                 }
                             }
                         }
+                        log.info("Entries from synonyms. Terms: {}, Queries: {}",
+                            termAlternativesWrapper.getTermToAlternativesMap().size(), termAlternativesWrapper.getQueryToAlternativesMap().size());
+                        return termAlternativesWrapper;
                     }
-                    return termAlternativesWrapper;
+                }
+                catch(Exception ex){
+                    log.error("Error in loading synonyms", ex);
+                    //todo metrics, alerts
                 }
             }
             return null;
@@ -261,49 +273,56 @@ public class LocalCachedTermAlternativesDataSource {
              */
 
             List<BiCompound> biCompoundList = null;
-            if (useNewCompounds) {
-                EntityMeta compoundTableMeta = this.augmentationDao.getEntityMeta("bi_compound");
-                log.info("Fetching data from compound table {} having base name: {}", compoundTableMeta.getLatestEntityTable(),
-                    compoundTableMeta.getBaseTable());
-                biCompoundList = this.rawQueriesDao.getAugmentationCompounds(compoundTableMeta.getLatestEntityTable());
-            }
-            else{
-                biCompoundList = this.augmentationDao.getOldCompounds();
-            }
 
-            if (biCompoundList != null && biCompoundList.size() > 0) {
-                TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
-
-                for (BiCompound currBiCompound : biCompoundList) {
-
-                    String unigram = currBiCompound.getUnigram();
-                    String bigram = currBiCompound.getBigram();
-                    String correct = currBiCompound.getCorrect();
-
-                    float conf = getConfidenceForCompoundWordEntry(correct, currBiCompound.getUnigramPHits(),
-                        currBiCompound.getUnigramSHits(), currBiCompound.getBigramPHits(), currBiCompound.getBigramSHits());
-
-                    Set<String> augmentations = new HashSet<String>(Arrays.asList(unigram, "(" + bigram + ")"));
-                    if ("both".equalsIgnoreCase(correct)) {
-                        if (areGramsValid(unigram, bigram)) {
-                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, Constants.CONTEXT_DEFAULT,
-                                AugmentAlternative.Type.CompundWord.name(), conf);
-                        }
-                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, Constants.CONTEXT_DEFAULT,
-                            AugmentAlternative.Type.CompundWord.name(), conf);
-                    }
-                    else if ("unigram".equals(correct)) {
-                        if (areGramsValid(unigram, bigram)) {
-                            addTermAlternatives(termAlternativesWrapper, bigram, augmentations, Constants.CONTEXT_DEFAULT,
-                                AugmentAlternative.Type.CompundWord.name(), conf);
-                        }
-                    }
-                    else if ("bigram".equals(correct)) {
-                        addTermAlternatives(termAlternativesWrapper, unigram, augmentations, Constants.CONTEXT_DEFAULT,
-                            AugmentAlternative.Type.CompundWord.name(), conf);
-                    }
+            try {
+                if (useNewCompounds) {
+                    EntityMeta compoundTableMeta = this.augmentationDao.getEntityMeta("bi_compound");
+                    log.info("Fetching data from compound table {} having base name: {}", compoundTableMeta.getLatestEntityTable(),
+                        compoundTableMeta.getBaseTable());
+                    biCompoundList = this.rawQueriesDao.getAugmentationCompounds(compoundTableMeta.getLatestEntityTable());
+                } else {
+                    biCompoundList = this.augmentationDao.getOldCompounds();
                 }
-                return termAlternativesWrapper;
+
+                if (biCompoundList != null && biCompoundList.size() > 0) {
+                    log.info("Number of {} bicompounds fetched: {}", useNewCompounds ? "new" : "old", biCompoundList.size());
+                    TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
+
+                    for (BiCompound currBiCompound : biCompoundList) {
+
+                        String unigram = currBiCompound.getUnigram();
+                        String bigram = currBiCompound.getBigram();
+                        String correct = currBiCompound.getCorrect();
+
+                        float conf = getConfidenceForCompoundWordEntry(correct, currBiCompound.getUnigramPHits(),
+                            currBiCompound.getUnigramSHits(), currBiCompound.getBigramPHits(), currBiCompound.getBigramSHits());
+
+                        Set<String> augmentations = new HashSet<String>(Arrays.asList(unigram, "(" + bigram + ")"));
+                        if ("both".equalsIgnoreCase(correct)) {
+                            if (areGramsValid(unigram, bigram)) {
+                                addTermAlternatives(termAlternativesWrapper, bigram, augmentations, Constants.CONTEXT_DEFAULT,
+                                    AugmentAlternative.Type.CompundWord.name(), conf);
+                            }
+                            addTermAlternatives(termAlternativesWrapper, unigram, augmentations, Constants.CONTEXT_DEFAULT,
+                                AugmentAlternative.Type.CompundWord.name(), conf);
+                        } else if ("unigram".equals(correct)) {
+                            if (areGramsValid(unigram, bigram)) {
+                                addTermAlternatives(termAlternativesWrapper, bigram, augmentations, Constants.CONTEXT_DEFAULT,
+                                    AugmentAlternative.Type.CompundWord.name(), conf);
+                            }
+                        } else if ("bigram".equals(correct)) {
+                            addTermAlternatives(termAlternativesWrapper, unigram, augmentations, Constants.CONTEXT_DEFAULT,
+                                AugmentAlternative.Type.CompundWord.name(), conf);
+                        }
+                    }
+                    log.info("Entries from {} bicompounds: Terms: {}, Queries: {}", useNewCompounds ? "new" : "old",
+                        termAlternativesWrapper.getTermToAlternativesMap().size(), termAlternativesWrapper.getQueryToAlternativesMap().size());
+                    return termAlternativesWrapper;
+                }
+            }
+            catch(Exception ex){
+                log.error("Error in loading compound words", ex);
+                //todo metrics, alerts
             }
             return null;
         }
@@ -323,9 +342,11 @@ public class LocalCachedTermAlternativesDataSource {
                 List<SpellCorrection> oldSpellCorrections = this.augmentationDao.getSpellCorrectionsLowConf();
 
                 if (newSpellCorrections != null && newSpellCorrections.size() > 0) {
+                    log.info("Number of new spell corrections fetched: {}", newSpellCorrections.size());
                     allSpellCorrections.addAll(newSpellCorrections);
                 }
                 if (oldSpellCorrections != null && oldSpellCorrections.size() > 0) {
+                    log.info("Number of old spell corrections fetched: {}", oldSpellCorrections.size());
                     allSpellCorrections.addAll(oldSpellCorrections);
                 }
 
@@ -339,12 +360,15 @@ public class LocalCachedTermAlternativesDataSource {
                         addTermAlternatives(termAlternativesWrapper, correction.getIncorrectSpelling(),
                             augmentations, Constants.CONTEXT_DEFAULT, AugmentAlternative.Type.SpellVariation.name(), 0);
                     }
+                    log.info("Entries from spell variations: Terms: {}, Queries: {}",
+                        termAlternativesWrapper.getTermToAlternativesMap().size(), termAlternativesWrapper.getQueryToAlternativesMap().size());
                     return termAlternativesWrapper;
                 }
 
             }
             catch(Exception ex){
                 log.error("Exception in loading spelling variations", ex);
+                //todo metrics, alerts
             }
             return null;
         }
@@ -357,6 +381,8 @@ public class LocalCachedTermAlternativesDataSource {
 
                 Set<String> correctSet;
                 if(augmentationExperiments != null && augmentationExperiments.size() > 0) {
+                    log.info("Number of augmentation experiment entries fetched: {}", augmentationExperiments.size());
+
                     TermAlternativesWrapper termAlternativesWrapper = new TermAlternativesWrapper();
                     for (AugmentationExperiment experiment : augmentationExperiments) {
                         float conf = 0f;
@@ -392,11 +418,14 @@ public class LocalCachedTermAlternativesDataSource {
                             addQueryAlternatives(termAlternativesWrapper, incorrect, correctSet, sourceName, type, conf);
                         }
                     }
+                    log.info("Entries from experiments: Terms: {}, Queries: {}",
+                        termAlternativesWrapper.getTermToAlternativesMap().size(), termAlternativesWrapper.getQueryToAlternativesMap().size());
                     return termAlternativesWrapper;
                 }
             }
             catch(Exception ex){
                 log.error("Exception while loading augmentation experiments", ex);
+                //todo metrics, alerts
             }
             return null;
         }

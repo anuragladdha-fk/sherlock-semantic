@@ -106,8 +106,14 @@ public class CachedNegativesDataSource {
         Set<String> getAllNegativeTerms(){
             Set<String> allNegatives = new HashSet<>();
 
-            addToSet(allNegatives, getStopwords());
-            addToSet(allNegatives, loadNegatives());
+            try {
+                addToSet(allNegatives, getStopwords());
+                addToSet(allNegatives, loadNegatives());
+            }
+            catch(Exception ex){
+                log.error("Could not fetch negatives", ex);
+                //todo metrics, alerts
+            }
 
             return allNegatives.stream().map(term -> term.trim().toLowerCase()).collect(Collectors.toSet());
         }
