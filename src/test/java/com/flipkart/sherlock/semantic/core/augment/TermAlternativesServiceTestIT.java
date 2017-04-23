@@ -23,10 +23,10 @@ public class TermAlternativesServiceTestIT {
          */
         TermAlternativesService termAlternativesService = TestContext.getInstance(TermAlternativesService.class);
 
-        Set<AugmentAlternative> term1Alt = termAlternativesService.getTermAlternatives("ziaomi", "");
-        Set<AugmentAlternative> term2Alt = termAlternativesService.getTermAlternatives("cse", "");
-        Set<AugmentAlternative> query1Alt = termAlternativesService.getQueryAlternatives("xiaomi redmi note 4g", "");
-        Set<AugmentAlternative> query2Alt = termAlternativesService.getQueryAlternatives("moto g 4 generation", "");
+        Set<AugmentAlternative> term1Alt = termAlternativesService.getTermAlternativesHelper("ziaomi", "");
+        Set<AugmentAlternative> term2Alt = termAlternativesService.getTermAlternativesHelper("cse", "");
+        Set<AugmentAlternative> query1Alt = termAlternativesService.getQueryAlternativesHelper("xiaomi redmi note 4g", "");
+        Set<AugmentAlternative> query2Alt = termAlternativesService.getQueryAlternativesHelper("moto g 4 generation", "");
 
         System.out.println(String.format("Alternative count: %d, alternatives: %s", term1Alt.size(), term1Alt));
         System.out.println(String.format("Alternative count: %d, alternatives: %s", term2Alt.size(), term2Alt));
@@ -47,10 +47,10 @@ public class TermAlternativesServiceTestIT {
          */
         TermAlternativesService termAlternativesService = TestContext.getInstance(TermAlternativesService.class);
 
-        Set<AugmentAlternative> term1Alt = termAlternativesService.getTermAlternatives("ziaomi", "llr"); //dont consider alternatives from llr context
-        Set<AugmentAlternative> term2Alt = termAlternativesService.getTermAlternatives("cse", "llr"); //dont consider alternatives from llr context
-        Set<AugmentAlternative> query1Alt = termAlternativesService.getQueryAlternatives("xiaomi redmi note 4g", "qspell"); //dont consider alternatives from qspell context
-        Set<AugmentAlternative> query2Alt = termAlternativesService.getQueryAlternatives("moto g 4 generation", "qspell"); //dont consider alternatives from qspell context
+        Set<AugmentAlternative> term1Alt = termAlternativesService.getTermAlternativesHelper("ziaomi", "llr"); //dont consider alternatives from llr context
+        Set<AugmentAlternative> term2Alt = termAlternativesService.getTermAlternativesHelper("cse", "llr"); //dont consider alternatives from llr context
+        Set<AugmentAlternative> query1Alt = termAlternativesService.getQueryAlternativesHelper("xiaomi redmi note 4g", "qspell"); //dont consider alternatives from qspell context
+        Set<AugmentAlternative> query2Alt = termAlternativesService.getQueryAlternativesHelper("moto g 4 generation", "qspell"); //dont consider alternatives from qspell context
 
         System.out.println(String.format("Alternative count: %d, alternatives: %s", term1Alt.size(), term1Alt));
         System.out.println(String.format("Alternative count: %d, alternatives: %s", term2Alt.size(), term2Alt));

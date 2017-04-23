@@ -23,7 +23,7 @@ public class AugmentAlternative {
      * Type of augmentation
      */
     public static enum Type{
-        CompundWord, Synonym, SpellVariation, term, replace, query, replaceNoShow
+            CompundWord, Synonym, SpellVariation, term, replace, query, replaceNoShow
     }
 
     private String original;
