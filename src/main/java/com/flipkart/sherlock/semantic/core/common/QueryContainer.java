@@ -2,6 +2,7 @@ package com.flipkart.sherlock.semantic.core.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.flipkart.sherlock.semantic.util.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -11,7 +12,7 @@ import java.util.*;
  */
 
 //From previous version
-public class QueryContainer {    //todo:improvement add builder method, based on purpose rename and remove unnecessary fields
+public class QueryContainer {    //todo:improvement add builder method, based on purpose rename class and remove unnecessary fields, methods
     @JsonProperty
     private String originalQuery;
     @JsonProperty
@@ -119,6 +120,10 @@ public class QueryContainer {    //todo:improvement add builder method, based on
 
     public Map<String, Set<String>> getAugmentations() {
         return Collections.unmodifiableMap(augmentations);
+    }
+
+    public void addAugmentation(String term, Set<String> augmentations) {
+        CollectionUtils.addEntriesToTargetMapValueSet(this.augmentations, term, augmentations);
     }
 
     public Map<String, Set<String>> setAugmentations(Map<String, Set<String>> augmentations) {

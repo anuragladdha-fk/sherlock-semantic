@@ -1,6 +1,7 @@
 package com.flipkart.sherlock.semantic.config;
 
 import com.google.common.collect.Sets;
+import org.apache.lucene.util.Version;
 
 import java.util.Set;
 
@@ -8,8 +9,10 @@ import java.util.Set;
  * Created by anurag.laddha on 13/04/17.
  */
 public class Constants {
-    public static final String CONTEXT_DEFAULT = "default";
 
+    public static final Version LUCENE_VERSION = Version.LUCENE_46;
+
+    public static final String CONTEXT_DEFAULT = "default";
     public static final String DUMMY_KEY = "dummy";
 
      //TODO this can come from config
