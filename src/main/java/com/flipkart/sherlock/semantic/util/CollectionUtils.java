@@ -1,5 +1,7 @@
 package com.flipkart.sherlock.semantic.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -103,6 +105,10 @@ public class CollectionUtils {
             return true;
         }
         return false;
+    }
+
+    public static String convertToKey(String text) {
+        return StringUtils.lowerCase(StringUtils.trimToEmpty(text));
     }
 }
 
