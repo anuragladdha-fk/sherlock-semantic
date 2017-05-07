@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Created by anurag.laddha on 22/04/17.
  */
+
 @Singleton
 public class TermAlternativesService {
 
