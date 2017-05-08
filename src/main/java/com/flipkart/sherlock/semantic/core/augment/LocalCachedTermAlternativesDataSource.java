@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
-public class LocalCachedTermAlternativesDataSource {
+public class LocalCachedTermAlternativesDataSource implements IDataTermAlternatives {
 
     private LoadingCache<String, TermAlternativesWrapper> augmentCache;
 
@@ -48,6 +48,7 @@ public class LocalCachedTermAlternativesDataSource {
             .build(dataLoader);
     }
 
+    @Override
     public Set<AugmentAlternative> getTermAlternatives(String term){
         if (!StringUtils.isBlank(term)){
             TermAlternativesWrapper termAlternativesWrapper = getAlternativesFromCache();
@@ -58,6 +59,7 @@ public class LocalCachedTermAlternativesDataSource {
         return null;
     }
 
+    @Override
     public Set<AugmentAlternative> getQueryAlternatives(String query){
         if (!StringUtils.isBlank(query)){
             TermAlternativesWrapper termAlternativesWrapper = getAlternativesFromCache();

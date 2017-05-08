@@ -3,8 +3,7 @@ package com.flipkart.sherlock.semantic.init;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.flipkart.sherlock.semantic.config.Constants;
-import com.flipkart.sherlock.semantic.core.augment.DefaultTermAlternativeStage;
-import com.flipkart.sherlock.semantic.core.augment.TermAlternativesService;
+import com.flipkart.sherlock.semantic.core.augment.*;
 import com.flipkart.sherlock.semantic.core.flow.IStage;
 import com.flipkart.sherlock.semantic.core.flow.Stage;
 import com.google.inject.AbstractModule;
@@ -45,6 +44,23 @@ public class MiscInitProvider extends AbstractModule {
             MapBinder.newMapBinder(binder(), Stage.Flavor.class, IStage.class);
 
         stageFlavorToStageImplMap.addBinding(Stage.Flavor.TermAlternativesDefault).to(DefaultTermAlternativeStage.class)
+            .in(Singleton.class);
+
+
+        /**
+         * Binder for flavor of negatives data source type to concrete implementation
+         */
+        MapBinder<IDataNegatives.Type, IDataNegatives> negativesDataSourceTypeToImplMap =
+            MapBinder.newMapBinder(binder(), IDataNegatives.Type.class, IDataNegatives.class);
+        negativesDataSourceTypeToImplMap.addBinding(IDataNegatives.Type.Default).to(CachedNegativesDataSource.class).in(Singleton.class);
+
+
+        /**
+         * Binder for flavor of term alternatives data source type to concrete implementation
+         */
+        MapBinder<IDataTermAlternatives.Type, IDataTermAlternatives> termAlternativesDataSourceTypeToImplMap =
+            MapBinder.newMapBinder(binder(), IDataTermAlternatives.Type.class, IDataTermAlternatives.class);
+        termAlternativesDataSourceTypeToImplMap.addBinding(IDataTermAlternatives.Type.Default).to(LocalCachedTermAlternativesDataSource.class)
             .in(Singleton.class);
     }
 

@@ -5,12 +5,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,26 +29,32 @@ public class TermAlternativesServiceTest {
     @Mock
     AugmentationConfigProvider augmentationConfigProviderMock;
     @Mock
-    LocalCachedTermAlternativesDataSource localCachedTermAlternativesDataSourceMock;
+    AugmentDataAlgoFactory augmentDataAlgoFactoryMock;
     @Mock
-    CachedNegativesDataSource cachedNegativesDataSourceMock;
+    IDataNegatives negativesDSMock;
+    @Mock
+    IDataTermAlternatives termAlternativesMock;
+
 
     @Test
     public void testNegativeTermNotAugmented(){
         /**
          * Validate that negative terms and queries are not augmented
          */
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(true);  //all terms are considered negative
+
+
+        when(augmentDataAlgoFactoryMock.getNegativesDataSource(Matchers.<Map<String, String>>any())).thenReturn(negativesDSMock);
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(true);  //all terms are considered negative
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         //Verify no augmentations for query and term since term and query is considered negative
         Assert.assertEquals(0, termAlternativesService.getTermAlternativesHelper("term", "").size());
         Assert.assertEquals(0, termAlternativesService.getQueryAlternativesHelper("query", "").size());
 
         //Verify alternatives were never fetched and call was returned immediately
-        verify(localCachedTermAlternativesDataSourceMock, never()).getTermAlternatives(anyString());
-        verify(localCachedTermAlternativesDataSourceMock, never()).getQueryAlternatives(anyString());
+        verify(termAlternativesMock, never()).getTermAlternatives(anyString());
+        verify(termAlternativesMock, never()).getQueryAlternatives(anyString());
     }
 
     @Test
@@ -58,12 +67,14 @@ public class TermAlternativesServiceTest {
         mockAlternatives.add(new AugmentAlternative("term", "alt2", "default", "type2"));
 
         //setup mock behaviors
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(false); //No negative terms
-        when(localCachedTermAlternativesDataSourceMock.getTermAlternatives(anyString())).thenReturn(mockAlternatives);
-        when(localCachedTermAlternativesDataSourceMock.getQueryAlternatives(anyString())).thenReturn(mockAlternatives);
+        when(augmentDataAlgoFactoryMock.getNegativesDataSource(Matchers.<Map<String, String>>any())).thenReturn(negativesDSMock);
+        when(augmentDataAlgoFactoryMock.getTermAlternativesDataSource(Matchers.<Map<String, String>>any())).thenReturn(termAlternativesMock);
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(false); //No negative terms
+        when(termAlternativesMock.getTermAlternatives(anyString())).thenReturn(mockAlternatives);
+        when(termAlternativesMock.getQueryAlternatives(anyString())).thenReturn(mockAlternatives);
 
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         //Fetch term alternatives and verify if we are receiving expected alternatives
         Set<AugmentAlternative> termAlts = termAlternativesService.getTermAlternativesHelper("term", "");
@@ -88,14 +99,16 @@ public class TermAlternativesServiceTest {
         mockAlternatives.add(new AugmentAlternative("term", "alt4", "context4", "type2"));
 
         //setup mock behaviors
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(false); //No negative terms
-        when(localCachedTermAlternativesDataSourceMock.getTermAlternatives(anyString())).thenReturn(mockAlternatives);
-        when(localCachedTermAlternativesDataSourceMock.getQueryAlternatives(anyString())).thenReturn(mockAlternatives);
+        when(augmentDataAlgoFactoryMock.getNegativesDataSource(Matchers.<Map<String, String>>any())).thenReturn(negativesDSMock);
+        when(augmentDataAlgoFactoryMock.getTermAlternativesDataSource(Matchers.<Map<String, String>>any())).thenReturn(termAlternativesMock);
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(false); //No negative terms
+        when(termAlternativesMock.getTermAlternatives(anyString())).thenReturn(mockAlternatives);
+        when(termAlternativesMock.getQueryAlternatives(anyString())).thenReturn(mockAlternatives);
         //These contexts are disabled. So its alternatives should be dropped
         when(augmentationConfigProviderMock.getAllDisabledContext(anyString())).thenReturn(Sets.newHashSet("context1", "context2"));
 
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         //Alternatives only from context3, context4 are expected
         Set<AugmentAlternative> expectedAlternatives = new HashSet<>();
@@ -121,7 +134,7 @@ public class TermAlternativesServiceTest {
     @Test
     public void testCreateOrTerms(){
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         String origTerm = "abc";
         Set<String> terms = Sets.newHashSet("pqr", "xyz");
@@ -134,7 +147,7 @@ public class TermAlternativesServiceTest {
     @Test
     public void testAugmentationTypes(){
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         Assert.assertEquals("augment", termAlternativesService.getAugmentationTypes(Sets.newHashSet()));
         Assert.assertEquals("abc,augment,pqr", termAlternativesService.getAugmentationTypes(Sets.newHashSet(
@@ -146,10 +159,10 @@ public class TermAlternativesServiceTest {
     @Test
     public void testGetQueryAlternatives(){
 
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(false); //No negative terms
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(false); //No negative terms
 
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         TermAlternativesService spy = spy(termAlternativesService);
 
@@ -202,7 +215,7 @@ public class TermAlternativesServiceTest {
     @Test
     public void testExtractTermGroups(){
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
 
         Assert.assertEquals(Lists.newArrayList("9", "abc", "10"), termAlternativesService.splitAlphabetsAndNumbers("9abc10"));
         Assert.assertEquals(Lists.newArrayList("9.9", "ab"), termAlternativesService.splitAlphabetsAndNumbers("9.9ab"));
@@ -218,9 +231,9 @@ public class TermAlternativesServiceTest {
         Set<AugmentAlternative> augAlts = Sets.newHashSet(new AugmentAlternative("orig", "rep1", "abc", "query"),
             new AugmentAlternative("orig", "rep2", "abc", "query"));  //these will be given as term alternatives for any term
 
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(false); //No negative terms
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(false); //No negative terms
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
         TermAlternativesService spy = spy(termAlternativesService);   //to allow mocking of few methods and use real methods otherwise
 
         when(spy.getTermAlternativesHelper(anyString(), anyString())).thenReturn(augAlts);    //any term will be
@@ -249,9 +262,9 @@ public class TermAlternativesServiceTest {
         Set<AugmentAlternative> augAlts = Sets.newHashSet(new AugmentAlternative("orig", "rep1", "abc", "query"),
             new AugmentAlternative("orig", "rep2", "abc", "query"));
 
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(false); //No negative terms
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(false); //No negative terms
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
         TermAlternativesService spy = spy(termAlternativesService);   //to allow mocking of few methods and use real methods otherwise
 
         when(spy.getTermAlternativesHelper(eq("term"), anyString())).thenReturn(augAlts);   //alternative only available for term "term"
@@ -291,9 +304,9 @@ public class TermAlternativesServiceTest {
 
         Set<AugmentAlternative> term2Alts = Sets.newHashSet(new AugmentAlternative("term2", "combined replacement", "abc", "sometype"));
 
-        when(cachedNegativesDataSourceMock.containsNegative(anyString())).thenReturn(false); //No negative terms
+        when(negativesDSMock.containsNegative(anyString())).thenReturn(false); //No negative terms
         TermAlternativesService termAlternativesService = new TermAlternativesService(augmentationConfigProviderMock,
-            localCachedTermAlternativesDataSourceMock, cachedNegativesDataSourceMock);
+            augmentDataAlgoFactoryMock);
         TermAlternativesService spy = spy(termAlternativesService);   //to allow mocking of few methods and use real methods otherwise
 
         when(spy.getTermAlternativesHelper(eq("term1"), anyString())).thenReturn(term1Alts);

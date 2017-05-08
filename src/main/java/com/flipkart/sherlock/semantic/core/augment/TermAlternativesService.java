@@ -27,19 +27,16 @@ public class TermAlternativesService {
     private static final Set<AugmentAlternative> emptyAlternativeSet = new HashSet<>();
 
     private AugmentationConfigProvider augmentationConfigProvider;
-    private LocalCachedTermAlternativesDataSource localCachedTermAlternativesDataSource;
-    private CachedNegativesDataSource cachedNegativesDataSource;
+    private AugmentDataAlgoFactory augmentDataAlgoFactory;
 
     static final Pattern ALPHANUM_PATTERN = Pattern.compile("[0-9]{2,}[a-z]{2,}|[a-z]{2,}[0-9]{2,}", Pattern.CASE_INSENSITIVE);  //atleast 2 numbers and 2 alphabets
     static final Pattern SPLIT_ALPHABETS_NUMBERS_PATTERN = Pattern.compile("([0-9]+[.][0-9]+|[0-9]+|[a-z]+)", Pattern.CASE_INSENSITIVE);  //helps extract either number or letter or number with decimal
 
     @Inject
     public TermAlternativesService(AugmentationConfigProvider augmentationConfigProvider,
-                                   LocalCachedTermAlternativesDataSource localCachedTermAlternativesDataSource,
-                                   CachedNegativesDataSource cachedNegativesDataSource) {
+                                   AugmentDataAlgoFactory augmentDataAlgoFactory) {
         this.augmentationConfigProvider = augmentationConfigProvider;
-        this.localCachedTermAlternativesDataSource = localCachedTermAlternativesDataSource;
-        this.cachedNegativesDataSource = cachedNegativesDataSource;
+        this.augmentDataAlgoFactory = augmentDataAlgoFactory;
     }
 
     @VisibleForTesting
@@ -50,21 +47,24 @@ public class TermAlternativesService {
         if (!StringUtils.isBlank(term) && shouldAugment(term)){
             Set<AugmentAlternative> filteredTermAlternatives = new HashSet<>();
 
-            Set<AugmentAlternative> termAlternatives = this.localCachedTermAlternativesDataSource.getTermAlternatives(term);
-            Set<String> disabledContext = this.augmentationConfigProvider.getAllDisabledContext(contextKey);
+            IDataTermAlternatives termAlternativesDS = this.augmentDataAlgoFactory.getTermAlternativesDataSource(null);
+            if (termAlternativesDS != null) {
+                Set<AugmentAlternative> termAlternatives = termAlternativesDS.getTermAlternatives(term);
+                Set<String> disabledContext = this.augmentationConfigProvider.getAllDisabledContext(contextKey);
 
-            //Remove alternatives from disabled context
-            if (disabledContext != null && disabledContext.size() > 0) {
-                for (AugmentAlternative currTermAlt : termAlternatives) {
-                    if (StringUtils.isBlank(currTermAlt.getContext())
-                        || !disabledContext.contains(currTermAlt.getContext().trim().toLowerCase())) {
-                        filteredTermAlternatives.add(currTermAlt);
+                //Remove alternatives from disabled context
+                if (disabledContext != null && disabledContext.size() > 0) {
+                    for (AugmentAlternative currTermAlt : termAlternatives) {
+                        if (StringUtils.isBlank(currTermAlt.getContext())
+                            || !disabledContext.contains(currTermAlt.getContext().trim().toLowerCase())) {
+                            filteredTermAlternatives.add(currTermAlt);
+                        }
                     }
+                } else {
+                    filteredTermAlternatives = termAlternatives;
                 }
-            } else {
-                filteredTermAlternatives = termAlternatives;
+                return filteredTermAlternatives;
             }
-            return filteredTermAlternatives;
         }
         return emptyAlternativeSet;
     }
@@ -77,28 +77,34 @@ public class TermAlternativesService {
         if (!StringUtils.isBlank(query) && shouldAugment(query)){
             Set<AugmentAlternative> filteredQueryAlternatives = new HashSet<>();
 
-            Set<AugmentAlternative> queryAlternatives = this.localCachedTermAlternativesDataSource.getQueryAlternatives(query);
-            Set<String> disabledContext = this.augmentationConfigProvider.getAllDisabledContext(contextKey);
+            IDataTermAlternatives termAlternativesDS = this.augmentDataAlgoFactory.getTermAlternativesDataSource(null);
+            if (termAlternativesDS != null) {
+                Set<AugmentAlternative> queryAlternatives = termAlternativesDS.getQueryAlternatives(query);
+                Set<String> disabledContext = this.augmentationConfigProvider.getAllDisabledContext(contextKey);
 
-            //Remove alternatives from disabled context
-            if (disabledContext != null && disabledContext.size() > 0) {
-                for (AugmentAlternative currQueryAlt : queryAlternatives) {
-                    if (StringUtils.isBlank(currQueryAlt.getContext())
-                        || !disabledContext.contains(currQueryAlt.getContext().trim().toLowerCase())) {
-                        filteredQueryAlternatives.add(currQueryAlt);
+                //Remove alternatives from disabled context
+                if (disabledContext != null && disabledContext.size() > 0) {
+                    for (AugmentAlternative currQueryAlt : queryAlternatives) {
+                        if (StringUtils.isBlank(currQueryAlt.getContext())
+                            || !disabledContext.contains(currQueryAlt.getContext().trim().toLowerCase())) {
+                            filteredQueryAlternatives.add(currQueryAlt);
+                        }
                     }
+                } else {
+                    filteredQueryAlternatives = queryAlternatives;
                 }
+                return filteredQueryAlternatives;
             }
-            else {
-                filteredQueryAlternatives = queryAlternatives;
-            }
-            return filteredQueryAlternatives;
         }
         return emptyAlternativeSet;
     }
 
     public boolean shouldAugment(String term){
-        return !this.cachedNegativesDataSource.containsNegative(term);
+        IDataNegatives negativesDS = this.augmentDataAlgoFactory.getNegativesDataSource(null);
+        if (negativesDS != null){
+            return !negativesDS.containsNegative(term);
+        }
+        return true;
     }
 
     /**
@@ -179,9 +185,9 @@ public class TermAlternativesService {
      */
     //TODO fix method params and return type. Dont modify state of params. Create a new type and return all modified aspects.
     public boolean getTermRangeAlternatives(String[] terms, QueryContainer queryAugmentInfo,
-                                        StringBuilder sb, //to create lucene query
-                                        Set<AugmentAlternative> allAugmentations, //adds to alteratives
-                                        int startIndex, int numElements, String contextKey) {   //equivalent of AugmenterImpl.augmentShingle
+                                            StringBuilder sb, //to create lucene query
+                                            Set<AugmentAlternative> allAugmentations, //adds to alteratives
+                                            int startIndex, int numElements, String contextKey) {   //equivalent of AugmenterImpl.augmentShingle
         boolean foundAlternatives = false;
         if (startIndex + numElements <= terms.length) {
             String gram = StringUtils.join(terms, ' ', startIndex, startIndex + numElements);

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  */
 
 @Singleton
-public class CachedNegativesDataSource {
+public class CachedNegativesDataSource implements IDataNegatives {
 
     private static final Logger log = LoggerFactory.getLogger(CachedNegativesDataSource.class);
 
@@ -46,6 +46,7 @@ public class CachedNegativesDataSource {
             .build(negativeTermsDataLoader);
     }
 
+    @Override
     public boolean containsNegative(String term){
         if (!StringUtils.isBlank(term)) {
             Set<String> allNegatives = getNegativesFromCache();
