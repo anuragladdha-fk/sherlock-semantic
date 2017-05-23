@@ -26,8 +26,8 @@ public class TermAlternativesService {
 
     private static final Set<AugmentAlternative> emptyAlternativeSet = new HashSet<>();
 
-    private AugmentationConfigProvider augmentationConfigProvider;
-    private AugmentDataAlgoFactory augmentDataAlgoFactory;
+    private final AugmentationConfigProvider augmentationConfigProvider;
+    private final AugmentDataAlgoFactory augmentDataAlgoFactory;
 
     static final Pattern ALPHANUM_PATTERN = Pattern.compile("[0-9]{2,}[a-z]{2,}|[a-z]{2,}[0-9]{2,}", Pattern.CASE_INSENSITIVE);  //atleast 2 numbers and 2 alphabets
     static final Pattern SPLIT_ALPHABETS_NUMBERS_PATTERN = Pattern.compile("([0-9]+[.][0-9]+|[0-9]+|[a-z]+)", Pattern.CASE_INSENSITIVE);  //helps extract either number or letter or number with decimal
