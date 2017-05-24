@@ -1,7 +1,7 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
+import com.flipkart.sherlock.semantic.common.config.SearchConfigProvider;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -16,8 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.mockito.Mockito.*;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by anurag.laddha on 21/04/17.

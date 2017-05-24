@@ -1,10 +1,10 @@
 package com.flipkart.sherlock.semantic;
 
-import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
+import com.flipkart.sherlock.semantic.common.config.SearchConfigProvider;
 import com.flipkart.sherlock.semantic.core.augment.AugmentationConfigProvider;
 import com.flipkart.sherlock.semantic.core.augment.CachedNegativesDataSource;
 import com.flipkart.sherlock.semantic.core.augment.LocalCachedTermAlternativesDataSource;
-import com.flipkart.sherlock.semantic.util.TestContext;
+import com.flipkart.sherlock.semantic.common.util.TestContext;
 import junit.framework.Assert;
 import org.junit.Test;
 

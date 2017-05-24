@@ -2,7 +2,7 @@ package com.flipkart.sherlock.semantic.core.augment;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flipkart.sherlock.semantic.config.Constants;
+import com.flipkart.sherlock.semantic.common.config.Constants;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;

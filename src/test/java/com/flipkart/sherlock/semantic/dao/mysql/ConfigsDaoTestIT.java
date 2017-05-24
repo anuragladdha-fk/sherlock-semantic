@@ -1,8 +1,9 @@
 package com.flipkart.sherlock.semantic.dao.mysql;
 
-import com.flipkart.sherlock.semantic.dao.mysql.entity.SearchConfig;
-import com.flipkart.sherlock.semantic.dao.mysql.entity.SolrEntities;
-import com.flipkart.sherlock.semantic.util.TestContext;
+import com.flipkart.sherlock.semantic.common.dao.mysql.ConfigsDao;
+import com.flipkart.sherlock.semantic.common.dao.mysql.entity.SearchConfig;
+import com.flipkart.sherlock.semantic.common.dao.mysql.entity.SolrEntities;
+import com.flipkart.sherlock.semantic.common.util.TestContext;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ public class ConfigsDaoTestIT {
 
     @Test
     public void testGetSolrFacetFieldMappings(){
-        ConfigsDao  configsDao = TestContext.getInstance(ConfigsDao.class);
+        ConfigsDao configsDao = TestContext.getInstance(ConfigsDao.class);
         List<SolrEntities.SolrFacetField> solrFacetFields = configsDao.getAllSolrFacetFieldMappings();
         System.out.println(solrFacetFields);
         Assert.assertTrue(solrFacetFields.size() > 0);

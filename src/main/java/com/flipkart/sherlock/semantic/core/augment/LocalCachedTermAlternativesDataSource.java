@@ -2,11 +2,11 @@ package com.flipkart.sherlock.semantic.core.augment;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flipkart.sherlock.semantic.config.Constants;
+import com.flipkart.sherlock.semantic.common.config.Constants;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.flipkart.sherlock.semantic.dao.mysql.RawQueriesDao;
 import com.flipkart.sherlock.semantic.dao.mysql.entity.AugmentationEntities.*;
-import com.flipkart.sherlock.semantic.util.CollectionUtils;
+import com.flipkart.sherlock.semantic.common.util.CollectionUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

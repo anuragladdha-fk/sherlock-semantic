@@ -1,6 +1,6 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
-import com.flipkart.sherlock.semantic.util.TestContext;
+import com.flipkart.sherlock.semantic.common.util.TestContext;
 import junit.framework.Assert;
 import org.junit.Test;
 

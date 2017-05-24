@@ -1,6 +1,6 @@
 package com.flipkart.sherlock.semantic.resources;
 
-import com.flipkart.sherlock.semantic.dao.mysql.ConfigsDao;
+import com.flipkart.sherlock.semantic.common.dao.mysql.ConfigsDao;
 import com.google.inject.Inject;
 
 import javax.ws.rs.GET;

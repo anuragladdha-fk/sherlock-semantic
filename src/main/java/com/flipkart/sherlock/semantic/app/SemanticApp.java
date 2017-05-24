@@ -1,10 +1,10 @@
 package com.flipkart.sherlock.semantic.app;
 
 
-import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConfig;
-import com.flipkart.sherlock.semantic.dao.mysql.entity.MysqlConnectionPoolConfig;
-import com.flipkart.sherlock.semantic.init.MiscInitProvider;
-import com.flipkart.sherlock.semantic.init.MysqlDaoProvider;
+import com.flipkart.sherlock.semantic.common.dao.mysql.entity.MysqlConfig;
+import com.flipkart.sherlock.semantic.common.dao.mysql.entity.MysqlConnectionPoolConfig;
+import com.flipkart.sherlock.semantic.core.augment.init.MiscInitProvider;
+import com.flipkart.sherlock.semantic.core.augment.init.MysqlDaoProvider;
 import com.flipkart.sherlock.semantic.resources.TestDaoResource;
 import com.flipkart.sherlock.semantic.resources.TestResource;
 import com.google.inject.Guice;

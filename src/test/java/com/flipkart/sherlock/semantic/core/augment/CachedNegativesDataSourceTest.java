@@ -1,6 +1,6 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
-import com.flipkart.sherlock.semantic.config.SearchConfigProvider;
+import com.flipkart.sherlock.semantic.common.config.SearchConfigProvider;
 import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
@@ -15,8 +15,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by anurag.laddha on 18/04/17.

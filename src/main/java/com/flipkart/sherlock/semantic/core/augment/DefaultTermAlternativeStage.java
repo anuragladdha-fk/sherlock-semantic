@@ -1,9 +1,9 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
-import com.flipkart.sherlock.semantic.core.flow.IStage;
-import com.flipkart.sherlock.semantic.core.flow.Stage;
-import com.flipkart.sherlock.semantic.core.flow.StageRequest;
-import com.flipkart.sherlock.semantic.core.flow.StageResponse;
+import com.flipkart.sherlock.semantic.common.flow.IStage;
+import com.flipkart.sherlock.semantic.common.flow.Stage;
+import com.flipkart.sherlock.semantic.common.flow.StageRequest;
+import com.flipkart.sherlock.semantic.common.flow.StageResponse;
 
 /**
  * Created by anurag.laddha on 07/05/17.

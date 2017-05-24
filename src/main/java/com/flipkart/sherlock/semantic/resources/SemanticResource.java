@@ -1,6 +1,6 @@
 package com.flipkart.sherlock.semantic.resources;
 
-import com.flipkart.sherlock.semantic.representation.AugmentationResponse;
+import com.flipkart.sherlock.semantic.core.augment.representation.AugmentationResponse;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

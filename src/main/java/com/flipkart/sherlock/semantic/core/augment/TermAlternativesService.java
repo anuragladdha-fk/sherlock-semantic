@@ -1,9 +1,9 @@
 package com.flipkart.sherlock.semantic.core.augment;
 
-import com.flipkart.sherlock.semantic.config.Constants;
-import com.flipkart.sherlock.semantic.core.common.QueryContainer;
-import com.flipkart.sherlock.semantic.core.lucene.FKTokenFilter;
-import com.flipkart.sherlock.semantic.core.lucene.FkTokenizerFactory;
+import com.flipkart.sherlock.semantic.common.config.Constants;
+import com.flipkart.sherlock.semantic.common.QueryContainer;
+import com.flipkart.sherlock.semantic.common.lucene.FKTokenFilter;
+import com.flipkart.sherlock.semantic.common.lucene.FkTokenizerFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
