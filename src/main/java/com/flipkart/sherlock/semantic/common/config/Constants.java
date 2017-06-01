@@ -21,4 +21,6 @@ public class Constants {
     //Named
     public static final String GUICE_LOCAL_CACHE_EXPIRY = "localCacheExpiry";
     public static final String GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE = "localCacheLoadingExecutorService";
+    public static final String CORE_TO_URL_MAPPING = "coreToUrlMapping";
+
 }
