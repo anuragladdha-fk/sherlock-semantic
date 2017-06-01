@@ -1,6 +1,7 @@
 package com.flipkart.sherlock.semantic.core.search;
 
-import com.flipkart.sherlock.semantic.core.solr.SolrServerProvider;
+
+import com.flipkart.sherlock.semantic.common.solr.SolrServerProvider;
 import com.google.inject.Inject;
 
 import java.util.Map;

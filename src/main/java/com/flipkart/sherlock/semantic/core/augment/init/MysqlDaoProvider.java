@@ -1,9 +1,10 @@
 package com.flipkart.sherlock.semantic.core.augment.init;
 
-import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
+import com.flipkart.sherlock.semantic.common.dao.mysql.CompleteTableDao;
 import com.flipkart.sherlock.semantic.common.dao.mysql.ConfigsDao;
 import com.flipkart.sherlock.semantic.common.dao.mysql.entity.MysqlConfig;
 import com.flipkart.sherlock.semantic.common.dao.mysql.entity.MysqlConnectionPoolConfig;
+import com.flipkart.sherlock.semantic.dao.mysql.AugmentationDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -33,7 +34,7 @@ public class MysqlDaoProvider extends AbstractModule {
     @Singleton
     DBI DBIProvider() throws Exception {
         String dburl = "jdbc:mysql://" + mysqlConfig.getDbHost() + ":" + mysqlConfig.getDbPort()
-            + "/" + mysqlConfig.getDbName() + "?rewriteBatchedStatements=true";
+                + "/" + mysqlConfig.getDbName() + "?rewriteBatchedStatements=true";
 
         //c3p0 Connection pool configuration
         ComboPooledDataSource pooledDataSource = new ComboPooledDataSource();
@@ -53,14 +54,21 @@ public class MysqlDaoProvider extends AbstractModule {
     @Inject
     @Singleton
     @Provides
-    ConfigsDao getConfigsDao(DBI dbi){
+    ConfigsDao getConfigsDao(DBI dbi) {
         return dbi.onDemand(ConfigsDao.class);
     }
 
     @Inject
     @Singleton
     @Provides
-    AugmentationDao getAugmentationDao(DBI dbi){
+    AugmentationDao getAugmentationDao(DBI dbi) {
         return dbi.onDemand(AugmentationDao.class);
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    CompleteTableDao getCompleteTableDao(DBI dbi) {
+        return dbi.onDemand(CompleteTableDao.class);
     }
 }

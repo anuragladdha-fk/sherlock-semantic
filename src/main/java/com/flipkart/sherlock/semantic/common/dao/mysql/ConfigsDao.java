@@ -13,14 +13,14 @@ import java.util.List;
  */
 public interface ConfigsDao {
 
-    @SqlQuery("SELECT value FROM sherlock.search_configs WHERE name = :name AND bucket = :bucket ")
+    @SqlQuery("SELECT value FROM sherlock.search_configs WHERE name = :name AND bucket = :bucket")
     String getConfig(@Bind("name") String fieldName, @Bind("bucket") String bucket);
 
     @RegisterMapper(SearchConfig.SearchConfigMapper.class)
-    @SqlQuery("SELECT * FROM sherlock.search_configs ")
+    @SqlQuery("SELECT * FROM sherlock.search_configs")
     List<SearchConfig> getAllSearchConfigs();
 
     @RegisterMapper(SolrEntities.SolrFacetFieldMapper.class)
-    @SqlQuery("SELECT * FROM sherlock.solr_facet_field_mapping ")
+    @SqlQuery("SELECT * FROM sherlock.solr_facet_field_mapping")
     List<SolrEntities.SolrFacetField> getAllSolrFacetFieldMappings();
 }
