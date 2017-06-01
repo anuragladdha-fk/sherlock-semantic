@@ -22,6 +22,10 @@ public class SearchRequest {
         private Param(String s) {
             paramName = s;
         }
+
+        public String getParamName(){
+            return paramName;
+        }
     }
 
     private Map<Param, List<String>> requestParams = new HashMap<>();
@@ -31,18 +35,14 @@ public class SearchRequest {
             this.requestParams.remove(param);
         }
         else{
-            if (this.requestParams.get(param) == null){
-                this.requestParams.put(param, new ArrayList<>());
-            }
+            this.requestParams.computeIfAbsent(param, k -> new ArrayList<>());
             this.requestParams.get(param).add(value);
         }
     }
 
     void addParam(Param param, List<String> values){
         if (values != null && values.size() > 0){
-            if (this.requestParams.get(param) == null){
-                this.requestParams.put(param, new ArrayList<>());
-            }
+            this.requestParams.computeIfAbsent(param, k -> new ArrayList<>());
             values.forEach(val -> {
                 if (StringUtils.isNotBlank(val)) {
                     this.requestParams.get(param).add(val);

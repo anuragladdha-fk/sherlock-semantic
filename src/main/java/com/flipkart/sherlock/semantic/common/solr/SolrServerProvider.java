@@ -10,6 +10,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -19,6 +21,7 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by anurag.laddha on 26/04/17.
  */
+
+@Singleton
 public class SolrServerProvider {
 
     private static final Logger log = LoggerFactory.getLogger(SolrUtilProvider.class);
@@ -37,18 +42,21 @@ public class SolrServerProvider {
     private SearchConfigProvider searchConfigProvider;
     private Map<String, String> coreToUrlMap;
     private static final Object syncObj = new Object();
+    private static TypeReference<Map<String,String>> strToStrMap = new TypeReference<Map<String,String>>() {};
 
     public SolrServerProvider(SearchConfigProvider searchConfigProvider,
-                              ExecutorService executorService,
-                              Map<String, String> coreToUrlMap) {
-        this.coreToUrlMap = coreToUrlMap;
+                              @Named(Constants.GUICE_LOCAL_CACHE_LOADING_EXECUTOR_SERVICE) ExecutorService executorService) {
         this.searchConfigProvider = searchConfigProvider;
         ExperimentSolrCoreLoader experimentSolrCoreLoader = new ExperimentSolrCoreLoader(searchConfigProvider, executorService);
         this.experimentCoreToSolrServerCache = CacheBuilder.newBuilder().maximumSize(10).refreshAfterWrite(120, TimeUnit.SECONDS)
             .build(experimentSolrCoreLoader);
+        this.coreToUrlMap = SerDeUtils.getValueOrDefault(this.searchConfigProvider.getSearchConfig("coreToUrlMap",
+                strToStrMap), Collections.emptyMap());;
     }
 
     public SolrServer getSolrServer(String coreName, String experimentName) {
+        if(experimentName == null || experimentName.isEmpty())
+            return getSolrServer(coreName);
         SolrServer solrServer = null;
         if (StringUtils.isNotBlank(coreName)) {
             try {
@@ -75,7 +83,7 @@ public class SolrServerProvider {
     /**
      * Creates solr server instance from solr core to url mapping and cache's solr server instance
      */
-    private SolrServer getSolrServer(String coreName){
+    public SolrServer getSolrServer(String coreName){
         if (!this.solrServerMap.containsKey(coreName)){
             synchronized (syncObj){
                 if (!this.solrServerMap.containsKey(coreName) && this.coreToUrlMap.containsKey(coreName)){

@@ -2,6 +2,7 @@ package com.flipkart.sherlock.semantic.common.solr;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.flipkart.sherlock.semantic.common.config.SearchConfigProvider;
+import com.flipkart.sherlock.semantic.common.flow.Stage;
 import com.flipkart.sherlock.semantic.common.util.SerDeUtils;
 import com.flipkart.sherlock.semantic.common.solr.SolrServerProvider.*;
 import com.google.common.cache.LoadingCache;
@@ -82,7 +83,10 @@ public class SolrServerProviderTest {
         Map<String, String> coreToUrlMap = ImmutableMap.of("core1", "http://abc/solr/core1",
             "core2", "http://abc/solr/core2");
 
-        SolrServerProvider solrServerProvider = new SolrServerProvider(searchConfigProviderMock, executorServiceMock, coreToUrlMap);
+        when(searchConfigProviderMock.getSearchConfig(eq("coreToUrlMap"),
+                Matchers.<TypeReference<Map<String,String>>>any())).thenReturn(coreToUrlMap);  //mock response
+
+        SolrServerProvider solrServerProvider = new SolrServerProvider(searchConfigProviderMock, executorServiceMock);
         SolrServer solrServer = solrServerProvider.getSolrServer("core1", "abc"); //experiment "abc" should be ignored
 
         Assert.assertEquals("http://abc/solr/core1", ((HttpSolrServer)solrServer).getBaseURL());
@@ -105,8 +109,10 @@ public class SolrServerProviderTest {
 
         when(searchConfigProviderMock.getSearchConfig(eq("TurnOnIntentExperiment"), eq(Boolean.class))).thenReturn(true);
         when(expToSolrServerMock.get(anyString())).thenReturn(expToSolrServerMap);
+        when(searchConfigProviderMock.getSearchConfig(eq("coreToUrlMap"),Matchers.<TypeReference<Map<String,String>>>any()))
+                .thenReturn(coreToUrlMap);
 
-        SolrServerProvider solrServerProvider = new SolrServerProvider(searchConfigProviderMock, executorServiceMock, coreToUrlMap);
+        SolrServerProvider solrServerProvider = new SolrServerProvider(searchConfigProviderMock, executorServiceMock);
 
         //swap internal loading cache with mocked cache - now loading cache will return what we have set it up with
         Whitebox.setInternalState(solrServerProvider, "experimentCoreToSolrServerCache", expToSolrServerMock);
