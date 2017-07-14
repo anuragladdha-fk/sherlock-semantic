@@ -1,13 +1,16 @@
 package com.flipkart.sherlock.semantic.app;
 
 
+import com.flipkart.sherlock.semantic.autosuggest.dao.ConfigsDao;
 import com.flipkart.sherlock.semantic.autosuggest.providers.JsonSeDeProvider;
 import com.flipkart.sherlock.semantic.autosuggest.views.AutoSuggestView;
 import com.flipkart.sherlock.semantic.common.dao.mysql.entity.MysqlConfig;
 import com.flipkart.sherlock.semantic.common.dao.mysql.entity.MysqlConnectionPoolConfig;
+import com.flipkart.sherlock.semantic.core.augment.init.MiscInitProvider;
 import com.flipkart.sherlock.semantic.core.augment.init.MysqlDaoProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -23,11 +26,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by anurag.laddha on 02/04/17.
  */
+@Slf4j
 public class AutoSuggestApp {
 
     public static void main(String[] args) throws Exception {
 
-        MysqlConfig mysqlConfig = new MysqlConfig("localhost", 3306, "root", "", "sherlock");
+        MysqlConfig mysqlConfig = ConfigsDao.getMysqlConfig();
+        log.info("Staring the host with the following MySQL config: {}", mysqlConfig.toString());
         MysqlConnectionPoolConfig connectionPoolConfig = new MysqlConnectionPoolConfig.MysqlConnectionPoolConfigBuilder(1, 10)
                 .setInitialPoolSize(1)
                 .setAcquireIncrement(2)
@@ -35,7 +40,8 @@ public class AutoSuggestApp {
 
         Injector injector = Guice.createInjector(
                 new MysqlDaoProvider(mysqlConfig, connectionPoolConfig),
-                new JsonSeDeProvider());
+                new JsonSeDeProvider(),
+                new MiscInitProvider((int) TimeUnit.MINUTES.toSeconds(30), 10));
 
         // By default, jetty task queue is unbounded. Reject requests once queue is full.
         QueuedThreadPool threadPool = new QueuedThreadPool(1024, 8, (int) TimeUnit.MINUTES.toMillis(1), new ArrayBlockingQueue<Runnable>(1024));

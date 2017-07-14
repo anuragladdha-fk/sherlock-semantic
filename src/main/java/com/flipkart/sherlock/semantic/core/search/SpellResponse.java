@@ -4,9 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by anurag.laddha on 23/05/17.
@@ -14,17 +12,17 @@ import java.util.Map;
 @AllArgsConstructor
 @Getter
 @ToString
-public class SearchResponse {
+public class SpellResponse {
 
     private String solrQuery;
 
-    private List<Map<String, Object>> results;
+    private List<String> results;
 
-    public void addDoc(Map<String, Object> doc) {
-        results.add(doc);
+    public void addDoc(String suggestion) {
+        results.add(suggestion);
     }
 
-    public void addDocs(List<Map<String, Object>> docs) {
+    public void addDocs(List<String> docs) {
         results.addAll(docs);
     }
 

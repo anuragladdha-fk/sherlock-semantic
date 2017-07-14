@@ -29,7 +29,7 @@ public abstract class AbstractReloadableCache<Type> {
                 .refreshAfterWrite(refreshTime, unit).build(new CacheLoader<String, Type>() {
                     @Override
                     public Type load(String s) throws Exception {
-                        return getFromDB();
+                        return getFromSource();
                     }
                 });
         try {
@@ -39,7 +39,7 @@ public abstract class AbstractReloadableCache<Type> {
         }
     }
 
-    protected abstract Type getFromDB();
+    protected abstract Type getFromSource();
 
     public Type getCached() {
         try {

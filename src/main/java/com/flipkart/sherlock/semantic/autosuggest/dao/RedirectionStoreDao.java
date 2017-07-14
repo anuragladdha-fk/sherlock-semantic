@@ -23,7 +23,7 @@ public class RedirectionStoreDao extends AbstractReloadableMapCache<String> {
     }
 
     @Override
-    protected Map<String, String> getFromDB() {
+    protected Map<String, String> getFromSource() {
         List<StorePathRedirect> storePathRedirectList = completeTableDao.getStorePathRedirect();
         Map<String, String> storePathRedirectMap = new HashMap<>();
         for (StorePathRedirect storePathRedirect : storePathRedirectList) {

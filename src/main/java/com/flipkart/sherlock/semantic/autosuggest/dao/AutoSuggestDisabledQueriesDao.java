@@ -23,7 +23,7 @@ public class AutoSuggestDisabledQueriesDao extends AbstractReloadableMapCache<St
     }
 
     @Override
-    protected Map<String, String> getFromDB() {
+    protected Map<String, String> getFromSource() {
         List<AutoSuggestDisabled> autoSuggestDisabledQueries = completeTableDao.getAutoSuggestDisabledQueries();
         Map<String, String> prefixMap = new HashMap<>();
         for (AutoSuggestDisabled autoSuggestDisabledQuery : autoSuggestDisabledQueries) {

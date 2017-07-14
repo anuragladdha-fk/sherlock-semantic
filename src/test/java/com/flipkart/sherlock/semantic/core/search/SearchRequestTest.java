@@ -4,6 +4,7 @@ import org.apache.solr.common.params.CommonParams;
 import org.junit.Test;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ public class SearchRequestTest {
         searchRequest.addParam(SearchRequest.Param.FQ,"impressionsPerNumInputs:[9 TO *] OR impressions:[50 TO *]");
         searchRequest.addParam(SearchRequest.Param.FQ,"ctr:[0.03 TO *]");
         searchRequest.addParam(SearchRequest.Param.FQ,"query:samsung");
-        Map<SearchRequest.Param, List<String>> reqParams = searchRequest.getRequestParams();
+        Map<SearchRequest.Param, ArrayList<String>> reqParams = searchRequest.getRequestParams();
         System.out.println("reqParams = " + reqParams);
     }
 

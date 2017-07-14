@@ -117,4 +117,25 @@ public interface CompleteTableDao {
     @Mapper(SearchConfigsMapper.class)
     @SqlQuery("SELECT * FROM search_configs")
     List<SearchConfigs> getSearchConfigs();
+
+
+
+    @Data
+    @AllArgsConstructor
+    public static class StorePathMetaData implements Serializable {
+        private String storePath;
+        private String metadata;
+    }
+
+    public static class StorePathMetaDataMapper implements ResultSetMapper<StorePathMetaData> {
+        @Override
+        public StorePathMetaData map(int i, ResultSet resultSet, StatementContext statementContext) throws SQLException {
+            return new StorePathMetaData(resultSet.getString("path-id"),
+                    resultSet.getString("metadata"));
+        }
+    }
+
+    @Mapper(StorePathMetaDataMapper.class)
+    @SqlQuery("SELECT * FROM `store-path`")
+    List<StorePathMetaData> getStorePathCanonicalTitles();
 }

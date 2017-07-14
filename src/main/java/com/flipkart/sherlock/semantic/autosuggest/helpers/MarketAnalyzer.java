@@ -78,11 +78,14 @@ public class MarketAnalyzer {
      * @param marketPlaceId
      * @return
      */
-    public static List<String> getMarketPlaceIds(String groceryContext, String marketPlaceId) {
-        if (groceryContext != null && "true".equals(groceryContext.toLowerCase())) return Arrays.asList(FLIP_MART);
+    public List<String> getMarketPlaceIds(String contextStore, String groceryContext, String marketPlaceId) {
+        if (groceryContext == null) groceryContext = "false";
+        if (groceryContext.toLowerCase().equals("true")) return Arrays.asList(FLIP_MART);
+
         marketPlaceId = (marketPlaceId == null) ? FLIP_KART : marketPlaceId.toLowerCase();
-        if (marketPlaceId != null && ("grocery".equals(marketPlaceId) || FLIP_MART.equals(marketPlaceId)))
+        if (marketPlaceId.equals("grocery") || FLIP_MART.equals(marketPlaceId))
             return Arrays.asList(FLIP_KART, FLIP_MART);
+
         return Arrays.asList(FLIP_KART);
     }
 

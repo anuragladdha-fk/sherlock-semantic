@@ -1,21 +1,27 @@
 package com.flipkart.sherlock.semantic.autosuggest.dao;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import java.util.*;
 
 /**
  * Created by dhruv.pancholi on 31/05/17.
  */
+@Singleton
 public class AutoSuggestCacheRefresher {
 
     private Map<String, AbstractReloadableCache> abstractReloadableCaches;
 
     @Inject
-    public AutoSuggestCacheRefresher(RedirectionStoreDao redirectionStoreDao, AutoSuggestDisabledQueriesDao autoSuggestDisabledQueriesDao) {
+    public AutoSuggestCacheRefresher(AutoSuggestDisabledQueriesDao autoSuggestDisabledQueriesDao,
+                                     RedirectionStoreDao redirectionStoreDao,
+                                     StorePathCanonicalTitleDao storePathCanonicalTitleDao) {
+
         abstractReloadableCaches = new HashMap<>();
-        abstractReloadableCaches.put(redirectionStoreDao.getClass().getSimpleName(), redirectionStoreDao);
         abstractReloadableCaches.put(autoSuggestDisabledQueriesDao.getClass().getSimpleName(), autoSuggestDisabledQueriesDao);
+        abstractReloadableCaches.put(redirectionStoreDao.getClass().getSimpleName(), redirectionStoreDao);
+        abstractReloadableCaches.put(storePathCanonicalTitleDao.getClass().getSimpleName(), storePathCanonicalTitleDao);
     }
 
     public Map<String, Integer> refreshCache(String daos) {

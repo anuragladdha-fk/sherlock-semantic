@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="log-path">logs/</Property>
+    </Properties>
+    <appenders>
+        <Console name="console-log" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"/>
+        </Console>
+
+        <RollingFile name="ErrorFile" fileName="${log-path}/error.log"
+                     filePattern="${log-path}/error-%d{yyyy-MM-dd}-%i.log" >
+            <PatternLayout>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 GB" />
+            </Policies>
+            <DefaultRolloverStrategy max="3"/>
+        </RollingFile>
+        <RollingFile name="AppFile" fileName="${log-path}/app.log"
+                     filePattern="${log-path}/app-%d{yyyy-MM-dd}-%i.log" >
+            <PatternLayout>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 GB" />
+            </Policies>
+            <DefaultRolloverStrategy max="1"/>
+        </RollingFile>
+        <RollingFile name="SolrLog" fileName="${log-path}/solr.log"
+                     filePattern="${log-path}/app-%d{yyyy-MM-dd}-%i.log" >
+            <PatternLayout>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 GB" />
+            </Policies>
+            <DefaultRolloverStrategy max="1"/>
+        </RollingFile>
+    </appenders>
+    <Loggers>
+        <Logger name="org.eclipse.jetty" level="debug" additivity="false">
+            <appender-ref ref="console-log" level="debug"/>
+        </Logger>
+        <Logger name="org.eclipse.jetty" level="info" additivity="false">
+            <appender-ref ref="console-log" level="info"/>
+        </Logger>
+
+        <Logger name="com.flipkart.sherlock.semantic.core.search" level="debug" additivity="false">
+            <appender-ref ref="SolrLog"/>
+        </Logger>
+
+        <Logger name="com.flipkart.sherlock.semantic.core.search" level="info" additivity="false">
+            <appender-ref ref="SolrLog"/>
+        </Logger>
+
+        <Root level="debug">
+            <appender-ref ref="AppFile"/>
+        </Root>
+
+        <Root level="info">
+            <appender-ref ref="AppFile"/>
+        </Root>
+
+    </Loggers>
+</Configuration>

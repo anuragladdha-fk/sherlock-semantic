@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<dataConfig>
+    <script><![CDATA[
+function transformQuery(doc) {
+	var doc2 = doc.get('value').get('classification');
+	doc2.put('query', doc.get('_id').get('search-query'));
+	doc2.put('frequency', doc.get('value').get('totalCount').longValue());
+	return doc2;
+}
+]]></script>
+
+    <document name="autosuggest"></document>
+
+</dataConfig>
