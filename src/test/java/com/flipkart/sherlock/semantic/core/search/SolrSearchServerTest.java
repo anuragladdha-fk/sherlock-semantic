@@ -38,7 +38,6 @@ public class SolrSearchServerTest {
 //        SearchResponse searchResponse = solrSearchServer.query(searchRequest,"autosuggest", Collections.emptyMap());
 //        System.out.println("searchResponse = " + searchResponse);
 
-
     }
 
 

@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<config>
+    <abortOnConfigurationError>false</abortOnConfigurationError>
+
+    <valueSourceParser name="loglinear" class="com.flipkart.solr.search.LogLinearParser"/>
+    <valueSourceParser name="normloglinear" class="com.flipkart.solr.search.NormLogLinearParser"/>
+    <valueSourceParser name="poly" class="com.flipkart.solr.search.PolyValueSourceParser" />
+    <valueSourceParser name="mField" class="com.flipkart.solr.search.FieldMultiValueSourceParser" />
+    <valueSourceParser name="time" class="com.flipkart.solr.search.TimerValueSourceParser" />
+
+    <luceneMatchVersion>@LUCENE_VERSION@</luceneMatchVersion>
+    <indexConfig>
+        <writeLockTimeout>1000</writeLockTimeout>
+        <commitLockTimeout>10000</commitLockTimeout>
+
+        <lockType>single</lockType>
+
+        <useCompoundFile>false</useCompoundFile>
+        <ramBufferSizeMB>100</ramBufferSizeMB>
+        <mergeFactor>10</mergeFactor>
+        <maxMergeDocs>2147483647</maxMergeDocs>
+        <maxFieldLength>50000</maxFieldLength>
+
+        <unlockOnStartup>false</unlockOnStartup>
+
+        <deletionPolicy class="solr.SolrDeletionPolicy">
+            <str name="maxCommitsToKeep">1</str>
+            <str name="maxOptimizedCommitsToKeep">0</str>
+            <str name="maxCommitAge">2HOUR</str>
+        </deletionPolicy>
+
+    </indexConfig>
+
+    <jmx/>
+
+    <updateHandler class="solr.DirectUpdateHandler2">
+        <updateLog/>
+
+    </updateHandler>
+
+
+    <requestHandler name="/get" class="solr.RealTimeGetHandler">
+        <lst name="defaults">
+            <str name="omitHeader">true</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="/replication" class="solr.ReplicationHandler">
+        <lst name="master">
+            <str name="enable">${enable.master:false}</str>
+            <str name="replicateAfter">startup</str>
+            <str name="replicateAfter">commit</str>
+            <str name="confFiles">
+                commonprefix.txt,schema.xml,data-config.xml,protwords.txt,spellings.txt,stopwords.txt,synonyms.txt,synonyms_check.txt,synonyms_both.txt,synonyms_index.txt,synonyms_query.txt,synonyms_log_analysis_high.txt,synonyms_log_analysis_low.txt
+            </str>
+        </lst>
+        <lst name="slave">
+            <str name="enable">${enable.slave:false}</str>
+            <str name="masterUrl">@UTILS_SOLR_MASTER_URL_BASE@/@CORE@/replication</str>
+            <str name="pollInterval">00:10:00</str>
+        </lst>
+    </requestHandler>
+
+    <query>
+        <maxBooleanClauses>1024</maxBooleanClauses>
+
+        <filterCache
+                class="solr.LRUCache"
+                size="10000"
+                initialSize="1000"
+                autowarmCount="128"/>
+
+        <queryResultCache
+                class="solr.LRUCache"
+                size="20000"
+                initialSize="1000"
+                autowarmCount="32"/>
+
+        <documentCache
+                class="solr.LRUCache"
+                size="30000"
+                initialSize="5000"
+                autowarmCount="0"/>
+
+        <enableLazyFieldLoading>true</enableLazyFieldLoading>
+
+        <queryResultWindowSize>100</queryResultWindowSize>
+
+        <queryResultMaxDocsCached>500</queryResultMaxDocsCached>
+
+        <HashDocSet maxSize="4000000" loadFactor="0.75"/>
+
+        <useColdSearcher>true</useColdSearcher>
+
+        <maxWarmingSearchers>20</maxWarmingSearchers>
+
+    </query>
+
+    <requestDispatcher handleSelect="true">
+        <requestParsers enableRemoteStreaming="false" multipartUploadLimitInKB="2048"/>
+
+        <httpCaching lastModifiedFrom="openTime"
+                     etagSeed="Solr" never304="false">
+            <cacheControl>max-age=43200, must-revalidate</cacheControl>
+        </httpCaching>
+    </requestDispatcher>
+
+    <requestHandler name="standard" class="solr.SearchHandler">
+        <lst name="defaults">
+            <str name="echoParams">explicit</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="dismax" class="solr.SearchHandler">
+        <arr name="first-components">
+            <str>qnormalize</str>
+            <str>word_delimiter_fc</str>
+            <str>add_param_appender</str>
+            <str>solr42_fq_handle</str>
+        </arr>
+        <lst name="defaults">
+            <str name="defType">dismax</str>
+            <str name="echoParams">explicit</str>
+            <str name="qnormalize">on</str>
+            <str name="word_delimiter_on">on</str>
+            <str name="add_param_appender">on</str>
+            <str name="solr42_fq_handle">on</str>
+            <float name="tie">0.01</float>
+            <str name="fl">
+                id storeName
+            </str>
+            <str name="q.alt">*:*</str>
+            <str name="mm">100%</str>
+            <str name="qf">
+                storeName
+            </str>
+            <str name="pf">text^1.8</str>
+            <str name="qs">0</str>
+            <str name="ps">2</str>
+            <str name="mm">4&lt;-1 5&lt;75%</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="or" class="solr.SearchHandler">
+        <lst name="defaults">
+            <str name="defType">dismax</str>
+            <str name="echoParams">explicit</str>
+            <float name="tie">0.01</float>
+            <str name="fl">
+                storeName
+            </str>
+            <str name="qf">
+                storeName
+            </str>
+            <str name="pf">shingle^1.8</str>
+            <str name="qs">0</str>
+            <str name="ps">2</str>
+            <str name="mm">0</str>
+            <str name="bq">is_available:true^500.0</str>
+        </lst>
+        <lst name="appends">
+
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="partitioned" class="solr.SearchHandler">
+        <lst name="defaults">
+            <str name="defType">dismax</str>
+            <str name="echoParams">explicit</str>
+            <str name="qf">text^0.5 textCommonGrams^0.5 features^1.0 name^1.2 sku^1.5 id^10.0</str>
+            <str name="mm">2&lt;-1 5&lt;-2 6&lt;90%</str>
+            <str name="bq">incubationdate_dt:[* TO NOW/DAY-1MONTH]^2.2</str>
+        </lst>
+        <lst name="appends">
+            <str name="fq">inStock:true</str>
+        </lst>
+        <lst name="invariants">
+            <str name="facet.field">author</str>
+            <str name="facet.field">titleMinusAuthor</str>
+        </lst>
+    </requestHandler>
+
+    <searchComponent name="mlt" class="org.apache.solr.handler.component.MoreLikeThisComponent"/>
+    <searchComponent name="qnormalize" class="com.flipkart.w3.solr.QueryNormalizationComponent"/>
+    <searchComponent name="word_delimiter_fc"
+                     class="com.flipkart.solr.handler.component.WordDelimiterSpecificFirstComponent"/>
+    <searchComponent name="add_param_appender"
+                     class="com.flipkart.solr.handler.component.FlipSolrParamAggregatorComponent"/>
+    <searchComponent name="solr42_fq_handle" class="com.flipkart.solr.handler.component.solr42.FQSpecialComponent"/>
+
+    <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
+        <str name="queryAnalyzerFieldType">textSpellPhrase</str>
+
+        <lst name="spellchecker">
+            <str name="name">default</str>
+            <str name="field">a_spellPhrase</str>
+            <str name="buildOnCommit">false</str>
+            <str name="buildOnOptimize">false</str>
+            <str name="spellcheckIndexDir">spellchecker</str>
+        </lst>
+
+    </searchComponent>
+
+    <requestHandler name="spell_not" class="solr.SearchHandler">
+        <lst name="default">
+            <str name="mm">100%</str>
+            <str name="echoParams">explicit</str>
+            <str name="spellcheck.count">2</str>
+            <str name="spellcheck.onlyMorePopular">true</str>
+            <str name="spellcheck.extendedResults">true</str>
+            <str name="defType">dismax</str>
+            <str name="qf">
+                isbn^1.0 subtitleMinusAuthor^1.0 exactTitle^1.3 text^1.5 textCommonGrams^1.5 author^1.6
+                authorInitials^0.8 titleMinusAuthor^2.1
+            </str>
+        </lst>
+        <arr name="last-components">
+            <str>spellcheck</str>
+        </arr>
+    </requestHandler>
+
+
+    <!--Spell checking for AS-->
+    <searchComponent name="spellcheck_as" class="solr.SpellCheckComponent">
+        <str name="queryAnalyzerFieldType">textSpellPhrase</str>
+
+        <lst name="spellchecker">
+            <str name="name">default</str>
+            <str name="field">text_edgytext_phrase</str>
+            <str name="buildOnCommit">true</str>
+            <str name="buildOnOptimize">false</str>
+            <str name="spellcheckIndexDir">spellchecker_as</str>
+        </lst>
+
+    </searchComponent>
+
+    <requestHandler name="spell_as" class="solr.SearchHandler">
+        <lst name="default">
+            <str name="mm">100%</str>
+            <str name="echoParams">explicit</str>
+            <str name="spellcheck.count">20</str>
+            <str name="spellcheck.onlyMorePopular">false</str>
+            <str name="spellcheck.extendedResults">true</str>
+            <str name="defType">dismax</str>
+        </lst>
+        <arr name="last-components">
+            <str>spellcheck_as</str>
+        </arr>
+    </requestHandler>
+
+
+    <searchComponent name="elevator" class="solr.QueryElevationComponent">
+        <str name="queryFieldType">string</str>
+        <str name="config-file">elevate.xml</str>
+    </searchComponent>
+
+    <requestHandler name="/elevate" class="solr.SearchHandler" startup="lazy">
+        <lst name="defaults">
+            <str name="echoParams">explicit</str>
+        </lst>
+        <arr name="last-components">
+            <str>elevator</str>
+        </arr>
+    </requestHandler>
+
+    <requestHandler name="/update" class="solr.UpdateRequestHandler"/>
+
+    <requestHandler name="/analysis" class="solr.DocumentAnalysisRequestHandler"/>
+
+    <requestHandler name="/analysis/field"
+                    startup="lazy"
+                    class="solr.FieldAnalysisRequestHandler"/>
+
+
+    <requestHandler name="/update/csv" class="solr.CSVRequestHandler" startup="lazy"/>
+
+    <requestHandler name="/admin/" class="org.apache.solr.handler.admin.AdminHandlers"/>
+
+    <requestHandler name="/admin/ping" class="PingRequestHandler">
+        <lst name="defaults">
+            <str name="qt">dismax</str>
+            <str name="q">solrpingquery</str>
+            <str name="echoParams">all</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="/debug/dump" class="solr.DumpRequestHandler">
+        <lst name="defaults">
+            <str name="echoHandler">true</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="/dataimport" class="org.apache.solr.handler.dataimport.DataImportHandler">
+        <lst name="defaults">
+            <str name="config">data-config.xml</str>
+            <str name="optimize">false</str>
+            <str name="clean">false</str>
+        </lst>
+    </requestHandler>
+
+    <requestHandler name="/manualImport" class="org.apache.solr.handler.dataimport.DataImportHandler">
+        <lst name="defaults">
+            <str name="config">manual-data-config.xml</str>
+            <str name="optimize">false</str>
+        </lst>
+        <lst name="invariants">
+            <str name="clean">false</str>
+        </lst>
+    </requestHandler>
+
+    <highlighting>
+        <fragmenter name="gap" class="org.apache.solr.highlight.GapFragmenter" default="true">
+            <lst name="defaults">
+                <int name="hl.fragsize">100</int>
+            </lst>
+        </fragmenter>
+
+        <fragmenter name="regex" class="org.apache.solr.highlight.RegexFragmenter">
+            <lst name="defaults">
+                <int name="hl.fragsize">70</int>
+                <float name="hl.regex.slop">0.5</float>
+                <str name="hl.regex.pattern">[-\w ,/\n\"']{20,200}</str>
+            </lst>
+        </fragmenter>
+
+        <formatter name="html" class="org.apache.solr.highlight.HtmlFormatter" default="true">
+            <lst name="defaults">
+                <str name="hl.simple.pre"><![CDATA[<em>]]></str>
+                <str name="hl.simple.post"><![CDATA[</em>]]></str>
+            </lst>
+        </formatter>
+    </highlighting>
+
+    <queryResponseWriter name="xslt" class="org.apache.solr.response.XSLTResponseWriter">
+        <int name="xsltCacheLifetimeSeconds">5</int>
+    </queryResponseWriter>
+
+    <int name="xsltCacheLifetimeSeconds">5</int>
+
+    <queryParser name="fkLucene" class="com.flipkart.search.solr.qparser.FKLuceneQParserPlugin"/>
+    <queryParser name="fkSpan" class="com.flipkart.search.solr.qparser.FKSpanQParserPlugin"/>
+
+    <admin>
+        <defaultQuery>solr</defaultQuery>
+
+    </admin>
+
+</config>
